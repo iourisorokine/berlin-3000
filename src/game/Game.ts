@@ -296,7 +296,7 @@ export class Game {
       p.connected = true // the throw counts as a hit for the combo
       audio.swing()
     }
-    // OMA HILDE gets her breath back when left alone for 3 seconds
+    // heroes with regen get their breath back when left alone for 3 seconds
     p.calmT++
     if (p.hero.regen && p.calmT > 180 && p.hp > 0 && p.hp < p.maxHp && this.tick % p.hero.regen === 0) p.hp++
     if (p.doubleJumped) {
@@ -323,6 +323,10 @@ export class Game {
         this.fx.gust(p.x - 10, p.y, -1)
         this.fx.gust(p.x + 10, p.y, 1)
         audio.whoosh()
+      } else if (p.hero.specialFx === 'shuffle') {
+        this.fx.music(p.x, p.y, 36)
+        this.fx.popup(p.x, p.y - 96, 'OINK OINK!', '#ffb3c8')
+        audio.music()
       } else if (p.hero.specialFx === 'gallery') {
         this.galleryT = 110
         this.fx.popup(p.x, p.y - 96, 'VOILA!', '#f2c14e')

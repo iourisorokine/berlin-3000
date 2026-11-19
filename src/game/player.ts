@@ -24,7 +24,7 @@ export interface Player extends Fighter {
   doubleJumped?: boolean
   /** frames left of LOLLI's sugar rush (moves faster) */
   boostT: number
-  /** frames since last hurt (OMA HILDE heals when left alone) */
+  /** frames since last hurt (heroes with regen heal when left alone) */
   calmT: number
 }
 

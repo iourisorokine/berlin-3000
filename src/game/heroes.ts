@@ -1,14 +1,14 @@
 import type { AnimSet, Move, MoveFrame } from './fighter'
 import type { SheetKey } from './sprites'
 
-export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'oma' | 'kunst'
+export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'schwein' | 'kunst'
 
 /**
  * Order on the fighter-select screen. A hero only shows up once its sprite atlas exists
- * (OMA HILDE and HERR KUNST appear as soon as their sheets are imported).
+ * (BAD SCHWEIN and HERR KUNST appear as soon as their sheets are imported).
  * KALLE is kept in the code but off the list.
  */
-export const HERO_ORDER: HeroId[] = ['jule', 'shovel', 'queen', 'lolli', 'oma', 'kunst']
+export const HERO_ORDER: HeroId[] = ['jule', 'shovel', 'queen', 'lolli', 'schwein', 'kunst']
 
 /**
  * Everything that makes a playable hero different. Frame names come from
@@ -38,14 +38,14 @@ export interface HeroDef {
   dazeBonus?: number
   /** frames of speed boost after the special (LOLLI) */
   sugarRush?: number
-  /** heals 1 HP every this many frames after 3 s without being hit (OMA HILDE) */
+  /** heals 1 HP every this many frames after 3 s without being hit */
   regen?: number
   /** one line on the select screen about what makes this hero different */
   trait: string
   special: Move
   specialName: string
   /** extra visual for the special */
-  specialFx: 'ram' | 'shockwave' | 'music' | 'gust' | 'tornado' | 'gallery'
+  specialFx: 'ram' | 'shockwave' | 'music' | 'gust' | 'tornado' | 'gallery' | 'shuffle'
 }
 
 const f = (name: string, dur: number): MoveFrame => ({ name, dur })
@@ -333,44 +333,45 @@ export const HEROES: Record<HeroId, HeroDef> = {
     sugarRush: 240,
     trait: 'FAST KICKS - SUGAR RUSH',
   },
-  oma: {
-    id: 'oma',
-    name: 'OMA HILDE',
-    tagline: 'TECHNO GRANDMA',
-    color: '#7fd6ff',
-    sheet: 'oma',
-    hp: 150,
-    walkX: 0.95,
-    walkY: 0.6,
+  // half man, half wild boar, dressed like any Neukölln hipster
+  schwein: {
+    id: 'schwein',
+    name: 'BAD SCHWEIN',
+    tagline: 'WILD BOAR HIPSTER',
+    color: '#c98a5a',
+    sheet: 'schwein',
+    hp: 125,
+    walkX: 1.15,
+    walkY: 0.7,
     anim: STANDARD_ANIM,
     combo: [
-      { id: 'handbag', frames: [f('c1a', 6), f('c1b', 10)], active: [6, 10], reach: 36, damage: 9, knockback: 1.6, knockdown: false },
-      { id: 'backhand', frames: [f('c2a', 6), f('c2b', 11)], active: [6, 11], reach: 36, damage: 10, knockback: 1.8, knockdown: false },
-      { id: 'bagslam', frames: [f('f1', 12), f('f2', 8), f('f3', 8), f('f4', 8)], active: [12, 18], reach: 40, damage: 20, knockback: 3.6, knockdown: true, heavy: true },
+      { id: 'slap', frames: [f('c1a', 5), f('c1b', 9)], active: [5, 9], reach: 36, damage: 8, knockback: 1.3, knockdown: false },
+      { id: 'snoutbutt', frames: [f('c2a', 6), f('c2b', 11)], active: [6, 11], reach: 38, damage: 10, knockback: 1.8, knockdown: false },
+      { id: 'tuskcharge', frames: [f('f1', 10), f('f2', 8), f('f3', 9), f('f4', 8)], active: [10, 18], reach: 44, damage: 16, knockback: 4, knockdown: true, heavy: true, lunge: 2 },
     ],
-    air: { id: 'flybag', frames: [f('jkick', 999)], active: [0, 999], reach: 30, damage: 12, knockback: 2.4, knockdown: true },
-    dash: { id: 'dashbag', frames: [f('c1a', 4), f('c1b', 16)], active: [4, 14], reach: 38, damage: 12, knockback: 3, knockdown: true, lunge: 2.2 },
-    // swings the handbag round and round: a wide circle that hits three times
+    air: { id: 'bellyflop', frames: [f('jkick', 999)], active: [0, 999], reach: 34, damage: 12, knockback: 2.4, knockdown: true },
+    dash: { id: 'dashcharge', frames: [f('f1', 4), f('f2', 14)], active: [4, 14], reach: 42, damage: 12, knockback: 3.2, knockdown: true, lunge: 3 },
+    // the shoulders go up above his head and he shuffles left and right: every hit makes the
+    // people around him dance along, helplessly, for a few seconds
     special: {
-      id: 'handbagtornado',
-      frames: [f('sp1', 12), f('sp2', 8), f('sp3', 30), f('sp4', 12)],
-      active: [20, 50],
-      reach: 64,
-      depth: 26,
-      damage: 7,
-      knockback: 2,
+      id: 'schweineshuffle',
+      frames: [f('sp1', 10), f('sp2', 6), f('sp3', 6), f('sp2', 6), f('sp3', 6), f('sp2', 6), f('sp3', 6), f('sp4', 10)],
+      active: [10, 46],
+      reach: 72,
+      depth: 30,
+      damage: 5,
+      knockback: 0,
       knockdown: false,
       multi: true,
       radial: true,
-      rehit: 10,
-      spin: true,
+      rehit: 12,
+      stun: 150,
     },
-    specialName: 'HANDBAG TORNADO',
-    specialFx: 'tornado',
-    runSpeed: 1.9,
-    specialCooldown: 420,
-    regen: 40,
-    trait: 'TANKY - HEALS SLOWLY',
+    specialName: 'SCHWEINE SHUFFLE',
+    specialFx: 'shuffle',
+    runSpeed: 2.4,
+    specialCooldown: 400,
+    trait: 'MAKES ENEMIES DANCE',
   },
   kunst: {
     id: 'kunst',
