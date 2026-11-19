@@ -5,7 +5,7 @@ export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'schwein'
 
 /**
  * Order on the fighter-select screen. A hero only shows up once its sprite atlas exists
- * (BAD SCHWEIN and HERR KUNST appear as soon as their sheets are imported).
+ * (heroes appear as soon as their sheets are imported).
  * KALLE is kept in the code but off the list.
  */
 export const HERO_ORDER: HeroId[] = ['jule', 'shovel', 'queen', 'lolli', 'schwein', 'kunst']
@@ -355,7 +355,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
     // people around him dance along, helplessly, for a few seconds
     special: {
       id: 'schweineshuffle',
-      frames: [f('sp1', 10), f('sp2', 6), f('sp3', 6), f('sp2', 6), f('sp3', 6), f('sp2', 6), f('sp3', 6), f('sp4', 10)],
+      frames: [f('sp2', 10), f('sp1', 6), f('sp3', 6), f('sp1', 6), f('sp3', 6), f('sp1', 6), f('sp3', 6), f('sp4', 10)],
       active: [10, 46],
       reach: 72,
       depth: 30,
@@ -375,7 +375,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   },
   kunst: {
     id: 'kunst',
-    name: 'HERR KUNST',
+    name: 'YO HIGHNESS',
     tagline: 'QUEER PERFORMANCE ARTIST',
     color: '#f2c14e',
     sheet: 'kunst',
@@ -387,14 +387,14 @@ export const HEROES: Record<HeroId, HeroDef> = {
       { id: 'framepoke', frames: [f('c1a', 6), f('c1b', 9)], active: [6, 9], reach: 44, damage: 7, knockback: 1.2, knockdown: false },
       { id: 'frameswing', frames: [f('c2a', 6), f('c2b', 11)], active: [6, 11], reach: 50, damage: 9, knockback: 1.8, knockdown: false },
       // brings the empty gold frame down over the enemy's head
-      { id: 'frameslam', frames: [f('f1', 10), f('f2', 8), f('f3', 10), f('f4', 8)], active: [10, 18], reach: 46, damage: 15, knockback: 3.4, knockdown: true, heavy: true },
+      { id: 'frameslam', frames: [f('f1', 6), f('f2', 10), f('f3', 10), f('f4', 8)], active: [16, 24], reach: 46, damage: 15, knockback: 3.4, knockdown: true, heavy: true },
     ],
     air: { id: 'framedrop', frames: [f('jkick', 999)], active: [0, 999], reach: 34, damage: 10, knockback: 2.4, knockdown: true },
     dash: { id: 'dashframe', frames: [f('c2a', 4), f('c2b', 14)], active: [4, 14], reach: 50, damage: 10, knockback: 3, knockdown: true, lunge: 2.6 },
     // a spotlight, a pose: everyone around becomes a silver statue with a price tag
     special: {
       id: 'artinstallation',
-      frames: [f('sp1', 12), f('sp2', 10), f('sp3', 40), f('sp4', 10)],
+      frames: [f('sp1', 12), f('sp3', 10), f('sp2', 40), f('sp4', 10)],
       active: [22, 27],
       reach: 150,
       depth: 60,

@@ -48,7 +48,7 @@ export interface Move {
   spin?: boolean
   /** throws something instead of hitting up close (VINYL VIKTOR's records) */
   projectile?: { sprite: string; speed: number; damage: number; knockdown: boolean }
-  /** the stun turns targets into silver statues (HERR KUNST's art installation) */
+  /** the stun turns targets into silver statues (YO HIGHNESS's art installation) */
   statue?: boolean
   /** forward speed during the active frames */
   lunge?: number

@@ -14,6 +14,7 @@ What it does, per cell of each sheet:
   4. snaps it to a real pixel grid and one shared palette per character,
   5. records the feet anchor (bottom of the feet, middle of the legs);
      a sheet's "anchorX" can override it as a fraction of the frame width.
+Per-character option "dropHalo": removes a pale-yellow glow drawn around the figure.
 Per-character option "bodyAnchor": frames (idle, walk) pinned at the hips instead of the feet.
 Per-sheet options: "scale" (fixed art px per image px), "standFactor" (height of the "stand"
 poses relative to a normal standing pose, e.g. 0.92 for a leaning hurt pose), "keepAll" (keep every blob in a cell,
@@ -38,6 +39,9 @@ def load_keyed(path: Path):
     """RGB array + boolean 'figure' mask with the magenta background removed."""
     a = np.array(Image.open(path).convert("RGB")).astype(np.int32)
     r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    if path.name in DROP_HALO:
+        drop_halo(a)
+        r, g, b = a[..., 0], a[..., 1], a[..., 2]
     magenta = np.minimum(r, b) - g  # high on magenta, low on everything else
     loose = (magenta > 110) & (r > 150) & (b > 150)
     # Background = loose magenta connected to the image border, plus near-pure #FF00FF anywhere
@@ -51,6 +55,21 @@ def load_keyed(path: Path):
     a[fringe] = OUTLINE
     fig = ndimage.binary_opening(fig, iterations=1)
     return a, fig
+
+
+DROP_HALO: set[str] = set()  # file names whose pale-yellow glow is removed (see "dropHalo")
+
+
+def drop_halo(a: np.ndarray):
+    """Paints a pale-yellow glow (halo rays) magenta so it is keyed out. Only glow blobs that touch
+    the background go: gold drawn inside the black outline (trousers, frame, eye shadow) stays."""
+    r, g, b = (a[..., i].astype(int) for i in range(3))
+    glow = (r > 200) & (g > 110) & (b >= 25) & (b < 170) & (r - b > 70)
+    magish = (np.minimum(r, b) - g) > 60
+    lab, _ = ndimage.label(glow)
+    hit = np.unique(lab[ndimage.binary_dilation(magish, iterations=2) & glow])
+    kill = np.isin(lab, hit[hit > 0])
+    a[kill] = (255, 0, 255)
 
 
 def main_figure(mask: np.ndarray) -> np.ndarray:
@@ -152,6 +171,12 @@ def build(name: str, cfg: dict):
         return
     if cfg.get("scaleFrom") not in [sh["file"] for sh in cfg["sheets"]]:
         cfg["scaleFrom"] = cfg["sheets"][0]["file"]
+    DROP_HALO.clear()
+    if cfg.get("dropHalo"):
+        DROP_HALO.update(sh["file"] for sh in cfg["sheets"])
+        portraits = cfg.get("portraits")
+        for pl in portraits if isinstance(portraits, list) else ([portraits] if portraits else []):
+            DROP_HALO.add(pl["file"])
     target = cfg["targetHeight"]
     names, images = [], []
     overrides = {}

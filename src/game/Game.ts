@@ -151,7 +151,7 @@ export class Game {
   private heroId: HeroId = 'jule'
   /** frames left of the psychedelic colour wash (PSYCHEDELIC RAVE) */
   private psyT = 0
-  /** HERR KUNST's spotlight */
+  /** YO HIGHNESS's spotlight */
   private galleryT = 0
   /** hits landed in a row (resets after a pause) and frames left before it resets */
   private comboHits = 0
@@ -329,7 +329,7 @@ export class Game {
         audio.music()
       } else if (p.hero.specialFx === 'gallery') {
         this.galleryT = 110
-        this.fx.popup(p.x, p.y - 96, 'VOILA!', '#f2c14e')
+        this.fx.popup(p.x, p.y - 108, 'VOILA!', '#f2c14e')
         audio.flash()
       } else this.fx.ramDust(p.x - p.facing * 14, p.y, p.facing)
       if (p.hero.sugarRush) {

@@ -1111,7 +1111,7 @@
     ]
   },
   "kunst": {
-    "targetHeight": 70,
+    "targetHeight": 74,
     "colors": 48,
     "scaleFrom": "hero_kunst_A.png",
     "sheets": [
@@ -1119,10 +1119,6 @@
         "file": "hero_kunst_A.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "idle1",
-          "idle4"
-        ],
         "frames": [
           "idle1",
           "idle2",
@@ -1132,15 +1128,13 @@
           "walk2",
           "walk3",
           "walk4"
-        ]
+        ],
+        "standHeightPx": 428
       },
       {
         "file": "hero_kunst_B.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "c1a"
-        ],
         "frames": [
           "c1a",
           "c1b",
@@ -1150,15 +1144,13 @@
           "f2",
           "f3",
           "f4"
-        ]
+        ],
+        "standHeightPx": 428
       },
       {
         "file": "hero_kunst_C.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "hurt"
-        ],
         "frames": [
           "jcrouch",
           "jair",
@@ -1172,15 +1164,13 @@
         "anchorX": {
           "jair": 0.5,
           "jkick": 0.45
-        }
+        },
+        "standHeightPx": 428
       },
       {
         "file": "hero_kunst_D.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "win2"
-        ],
         "frames": [
           "sp1",
           "sp2",
@@ -1190,7 +1180,8 @@
           "win2",
           null,
           null
-        ]
+        ],
+        "standHeightPx": 428
       }
     ],
     "portraits": {
@@ -1213,7 +1204,8 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "dropHalo": true
   },
   "schwein": {
     "targetHeight": 70,
@@ -1224,10 +1216,6 @@
         "file": "hero_schwein_A.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "idle1",
-          "idle4"
-        ],
         "frames": [
           "idle1",
           "idle2",
@@ -1237,15 +1225,13 @@
           "walk2",
           "walk3",
           "walk4"
-        ]
+        ],
+        "standHeightPx": 402
       },
       {
         "file": "hero_schwein_B.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "c1a"
-        ],
         "frames": [
           "c1a",
           "c1b",
@@ -1255,15 +1241,13 @@
           "f2",
           "f3",
           "f4"
-        ]
+        ],
+        "standHeightPx": 402
       },
       {
         "file": "hero_schwein_C.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "hurt"
-        ],
         "frames": [
           "jcrouch",
           "jair",
@@ -1278,15 +1262,12 @@
           "jair": 0.5,
           "jkick": 0.45
         },
-        "standFactor": 0.92
+        "standHeightPx": 402
       },
       {
         "file": "hero_schwein_D.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "win2"
-        ],
         "frames": [
           "sp1",
           "sp2",
@@ -1297,7 +1278,7 @@
           null,
           null
         ],
-        "standFactor": 1.05
+        "standHeightPx": 402
       }
     ],
     "portraits": {
