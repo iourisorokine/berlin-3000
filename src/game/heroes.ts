@@ -1,4 +1,5 @@
-import type { AnimSet, Move, MoveFrame } from './fighter'
+import { SIZE } from './constants'
+import { scaleReach, type AnimSet, type Move, type MoveFrame } from './fighter'
 import type { SheetKey } from './sprites'
 
 export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'schwein' | 'kunst'
@@ -413,3 +414,5 @@ export const HEROES: Record<HeroId, HeroDef> = {
     trait: 'TURNS ENEMIES TO STATUES',
   },
 }
+
+for (const h of Object.values(HEROES)) scaleReach([...h.combo, h.air, h.dash, h.special], SIZE)

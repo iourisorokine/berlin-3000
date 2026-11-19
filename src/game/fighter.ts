@@ -22,6 +22,11 @@ export interface MoveFrame {
 }
 
 /** An attack: which frames to show, when it hurts, how far it reaches, what it does. */
+/** Bigger characters reach further: scales the reach of every move in a table, once, at load. */
+export function scaleReach(moves: Move[], k: number) {
+  for (const m of moves) m.reach = Math.round(m.reach * k)
+}
+
 export interface Move {
   id: string
   frames: MoveFrame[]

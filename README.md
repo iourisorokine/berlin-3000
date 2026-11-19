@@ -26,10 +26,14 @@ The game is then live at https://iourisorokine.github.io/berlin-3000/
 | C / Space (or K) | jump; X in the air = air attack; JULE can jump again in mid-air |
 | tap left/right twice | run; X while running = dash attack, jump while running = long jump |
 | V (or L) | special move (recharges over time, faster with every hit you land) |
-| Esc / P | pause |
+| Esc / P | pause menu: resume, restart the level, change fighter, main menu |
 | M | mute |
 
 Gamepad and on-screen touch controls also work.
+
+## Detail and size
+
+The game is drawn on a 384x216 art grid, on a canvas twice that size (`RES` in `src/game/constants.ts`). Fighters are imported with `"res": 2` in `tools/sprites.config.json`, so they carry twice the detail of the backgrounds and effects. `SIZE` scales every move's reach and the enemy spacing to match the fighters' height (`targetHeight` in the config).
 
 ## Adding ChatGPT sprites
 

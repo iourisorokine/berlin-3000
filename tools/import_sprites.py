@@ -14,6 +14,7 @@ What it does, per cell of each sheet:
   4. snaps it to a real pixel grid and one shared palette per character,
   5. records the feet anchor (bottom of the feet, middle of the legs);
      a sheet's "anchorX" can override it as a fraction of the frame width.
+Per-character option "res": atlas pixels per art pixel (2 = twice the detail, drawn at the same size).
 Per-character option "dropHalo": removes a pale-yellow glow drawn around the figure.
 Per-character option "bodyAnchor": frames (idle, walk) pinned at the hips instead of the feet.
 Per-sheet options: "scale" (fixed art px per image px), "standFactor" (height of the "stand"
@@ -177,7 +178,9 @@ def build(name: str, cfg: dict):
         portraits = cfg.get("portraits")
         for pl in portraits if isinstance(portraits, list) else ([portraits] if portraits else []):
             DROP_HALO.add(pl["file"])
-    target = cfg["targetHeight"]
+    # res: atlas pixels per art pixel. Characters use 2, so they show twice the detail at the same size.
+    res = cfg.get("res", 1)
+    target = cfg["targetHeight"] * res
     names, images = [], []
     overrides = {}
     fixed_anchor = {}
@@ -188,7 +191,7 @@ def build(name: str, cfg: dict):
         frames = sheet["frames"]
         overrides.update(sheet.get("anchorX", {}))
         if "scale" in sheet:
-            k = sheet["scale"]
+            k = sheet["scale"] * res
         elif "standHeightPx" in sheet:
             k = target / sheet["standHeightPx"]
         elif sheet.get("stand"):
@@ -227,12 +230,12 @@ def build(name: str, cfg: dict):
                 h = max(1, round(m.shape[0] * p["cropTop"]))
                 rgb, m = rgb[:h], m[:h]
             names.append(pname)
-            images.append(shrink(rgb, m, p["height"] / m.shape[0]))
+            images.append(shrink(rgb, m, p["height"] * res / m.shape[0]))
 
     images = quantize_all(images, cfg.get("colors", 32))
 
     # pack in rows, max 512 wide, 1 px gap
-    meta, x, y, row_h, pad, max_w = {}, 0, 0, 0, 1, 512
+    meta, x, y, row_h, pad, max_w = {}, 0, 0, 0, 1, 512 * res
     places = []
     for nm, im in zip(names, images):
         if x + im.width > max_w:
@@ -261,7 +264,7 @@ def build(name: str, cfg: dict):
             meta[n]["ax"] = int(round(waist_x(img_of[n]) - d))
     OUT.mkdir(parents=True, exist_ok=True)
     atlas.save(OUT / f"{name}.png", optimize=True)
-    (OUT / f"{name}.json").write_text(json.dumps({"image": f"{name}.png", "frames": meta}, indent=1))
+    (OUT / f"{name}.json").write_text(json.dumps({"image": f"{name}.png", "res": res, "frames": meta}, indent=1))
     print(f"  -> {name}.png ({atlas.width}x{atlas.height}), {len(meta)} frames")
 
 

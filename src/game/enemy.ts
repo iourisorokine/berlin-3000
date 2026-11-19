@@ -1,5 +1,5 @@
-import { GROUND_BOT, GROUND_TOP } from './constants'
-import { makeFighter, moveLength, setState, startMove, type AnimSet, type Fighter, type Move, type MoveFrame } from './fighter'
+import { GROUND_BOT, GROUND_TOP, SIZE } from './constants'
+import { makeFighter, moveLength, scaleReach, setState, startMove, type AnimSet, type Fighter, type Move, type MoveFrame } from './fighter'
 import type { SheetKey } from './sprites'
 
 const f = (name: string, dur: number): MoveFrame => ({ name, dur })
@@ -161,6 +161,8 @@ export const ENEMY_TYPES = {
   },
 } satisfies Record<string, EnemyType>
 
+for (const t of Object.values(ENEMY_TYPES)) scaleReach(t.moves, SIZE)
+
 export type EnemyKind = keyof typeof ENEMY_TYPES
 
 export interface Enemy extends Fighter {
@@ -226,11 +228,11 @@ export function updateEnemy(e: Enemy, target: Fighter) {
   if (--e.thinkT <= 0) {
     e.thinkT = rand(20, 45)
     if (e.attacker && !targetDown) {
-      e.goalX = target.x + (e.slot || side) * rand(22, 28)
+      e.goalX = target.x + (e.slot || side) * rand(22, 28) * SIZE
       e.goalY = target.y + rand(-2, 2)
     } else {
       // wait around at a distance, drifting in depth
-      e.goalX = target.x + side * rand(60, 95)
+      e.goalX = target.x + side * rand(60, 95) * SIZE
       e.goalY = rand(GROUND_TOP + 2, GROUND_BOT - 2)
     }
   }
@@ -256,7 +258,7 @@ export function updateEnemy(e: Enemy, target: Fighter) {
   const distY = Math.abs(target.y - e.y)
   // the selfie tourist poses with you while you lie on the ground
   const selfie = e.moves.find((m) => m.id === 'selfie')
-  if (selfie && targetDown && e.cooldown <= 0 && distX < 70 && Math.random() < 0.05) {
+  if (selfie && targetDown && e.cooldown <= 0 && distX < 70 * SIZE && Math.random() < 0.05) {
     e.facing = target.x > e.x ? 1 : -1
     startMove(e, selfie)
     e.cooldown = 90
@@ -265,12 +267,12 @@ export function updateEnemy(e: Enemy, target: Fighter) {
   if (!e.attacker || targetDown || e.cooldown > 0 || distY > (e.isBoss ? 10 : 5)) return
   // the boss's stomp works from further away: he uses it when you keep your distance
   const stomp = e.moves.find((m) => m.id === 'e_stomp')
-  if (stomp && distX > 40 && distX < 70 && Math.random() < 0.03) {
+  if (stomp && distX > 40 * SIZE && distX < 70 * SIZE && Math.random() < 0.03) {
     startMove(e, stomp)
     e.cooldown = rand(100, 150)
     return
   }
-  if (distX < 38) {
+  if (distX < 38 * SIZE) {
     const close = e.moves.filter((m) => m.id !== 'e_stomp' && !m.harmless)
     startMove(e, close[Math.floor(Math.random() * close.length)])
     e.cooldown = e.isBoss ? rand(40, 80) : rand(60, 120)

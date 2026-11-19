@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { audio } from './game/audio'
-import { VIEW_H, VIEW_W } from './game/constants'
+import { RES, VIEW_H, VIEW_W } from './game/constants'
 import { Game, type Scene } from './game/Game'
 import { TouchControls } from './ui/TouchControls'
 import { screenScale } from './ui/screenScale'
@@ -17,7 +17,7 @@ export default function App() {
 
   // React only hosts the canvas, the scaling and the touch buttons; the game runs itself.
   useEffect(() => {
-    const game = new Game(canvasRef.current!, { onScene: setScene })
+    const game = new Game(canvasRef.current!, { onScene: setScene, onToggleMute: () => setMuted((m) => !m) })
     gameRef.current = game
     game.start()
     return () => {
@@ -47,7 +47,7 @@ export default function App() {
     // a click gives the page keyboard focus (it runs inside a frame) and unlocks audio
     <div className={`app ${touch ? 'touch' : ''}`} onPointerDown={() => { window.focus(); audio.start() }}>
       <div className="screen-wrap" style={{ width: VIEW_W * scale, height: VIEW_H * scale }}>
-        <canvas ref={canvasRef} className="screen" width={VIEW_W} height={VIEW_H} style={{ width: VIEW_W * scale, height: VIEW_H * scale }} />
+        <canvas ref={canvasRef} className="screen" width={VIEW_W * RES} height={VIEW_H * RES} style={{ width: VIEW_W * scale, height: VIEW_H * scale }} />
         <button className="mute" onClick={() => setMuted((m) => !m)} aria-label={muted ? 'Sound on' : 'Sound off'}>
           {muted ? 'SOUND OFF' : 'SOUND ON'}
         </button>

@@ -7,6 +7,11 @@ import level from '../assets/bg/level.json'
 export const VIEW_W = 384
 export const VIEW_H = 216
 export const FPS = 60
+/** Canvas pixels per art pixel. Characters are imported with this much extra detail; the
+ *  backgrounds, effects and text stay chunky (each of their pixels becomes RES x RES). */
+export const RES = 2
+/** Character size compared with the first version: reaches and enemy spacing scale with it. */
+export const SIZE = 1.15
 
 /** Length of level 1 in art pixels (set by the background images, about 6 screens). */
 export const LEVEL_LEN: number = level.levelLen

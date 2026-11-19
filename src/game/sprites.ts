@@ -1,6 +1,6 @@
 // every atlas written by tools/import_sprites.py is picked up automatically
 const ATLAS_URLS = import.meta.glob('../assets/sprites/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
-const ATLAS_META = import.meta.glob('../assets/sprites/*.json', { eager: true, import: 'default' }) as Record<string, { frames: Record<string, Frame> }>
+const ATLAS_META = import.meta.glob('../assets/sprites/*.json', { eager: true, import: 'default' }) as Record<string, { frames: Record<string, Frame>; res?: number }>
 const nameOf = (path: string) => path.split('/').pop()!.replace(/\.(png|json)$/, '')
 
 /** One frame in an atlas; (ax, ay) is the feet point, relative to the frame's top-left. */
@@ -18,6 +18,8 @@ export interface Sheet {
   /** all-white copy, for the hit flash */
   white: HTMLCanvasElement
   frames: Record<string, Frame>
+  /** atlas pixels per art pixel (2 for the detailed characters) */
+  res: number
 }
 
 /** an atlas name: jule, kalle, monk, bouncer, props, fx... */
@@ -53,12 +55,12 @@ async function loadCanvas(url: string) {
 
 /** Loads every atlas once (plus a white copy of each, for the hit flash). */
 export async function loadSprites() {
-  const meta = Object.fromEntries(Object.entries(ATLAS_META).map(([p, m]) => [nameOf(p), m.frames]))
+  const meta = Object.fromEntries(Object.entries(ATLAS_META).map(([p, m]) => [nameOf(p), m]))
   await Promise.all(
     Object.entries(ATLAS_URLS).map(async ([p, url]) => {
       const name = nameOf(p)
       const img = await loadCanvas(url)
-      sheets.set(name, { img, white: whiteOf(img), frames: meta[name] })
+      sheets.set(name, { img, white: whiteOf(img), frames: meta[name].frames, res: meta[name].res ?? 1 })
     }),
   )
 }
@@ -99,20 +101,21 @@ export function drawFrame(
   ctx.scale(facing * (opts.scale ?? 1), opts.scale ?? 1)
   if (opts.tilt) ctx.rotate(-opts.tilt)
   if (opts.alpha !== undefined) ctx.globalAlpha = opts.alpha
-  ctx.drawImage(s.img, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)
+  const r = s.res
+  ctx.drawImage(s.img, f.x, f.y, f.w, f.h, -f.ax / r, -f.ay / r, f.w / r, f.h / r)
   if (opts.glaze && !opts.flash) {
     ctx.globalAlpha = (opts.alpha ?? 1) * opts.glaze
-    ctx.drawImage(s.white, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)
+    ctx.drawImage(s.white, f.x, f.y, f.w, f.h, -f.ax / r, -f.ay / r, f.w / r, f.h / r)
   }
   if (opts.flash) {
     // hit flash: a white glaze over the sprite rather than a solid white cut-out
     ctx.globalAlpha = (opts.alpha ?? 1) * 0.65
-    ctx.drawImage(s.white, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)
+    ctx.drawImage(s.white, f.x, f.y, f.w, f.h, -f.ax / r, -f.ay / r, f.w / r, f.h / r)
   }
   ctx.restore()
 }
 
 export function drawPortrait(ctx: CanvasRenderingContext2D, s: Sheet, name: string, x: number, y: number) {
   const f = s.frames[name]
-  if (f) ctx.drawImage(s.img, f.x, f.y, f.w, f.h, x, y, f.w, f.h)
+  if (f) ctx.drawImage(s.img, f.x, f.y, f.w, f.h, x, y, f.w / s.res, f.h / s.res)
 }

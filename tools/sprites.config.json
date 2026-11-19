@@ -1,7 +1,7 @@
 {
   "_comment": "One entry per character. 'frames' lists the meaning of each cell, left to right, top to bottom (null = skip). The sheet listed in 'scaleFrom' sets the size: its 'stand' frames are scaled to 'targetHeight' art pixels, and every other sheet of that character uses the same scale factor unless it sets its own 'standHeightPx'.",
   "kalle": {
-    "targetHeight": 72,
+    "targetHeight": 83,
     "colors": 40,
     "scaleFrom": "hero_kalle_X.png",
     "sheets": [
@@ -99,10 +99,11 @@
         "5": "portrait_angry",
         "6": "portrait_hurt"
       }
-    }
+    },
+    "res": 2
   },
   "jule": {
-    "targetHeight": 66,
+    "targetHeight": 76,
     "colors": 48,
     "scaleFrom": "hero_jule_A.png",
     "sheets": [
@@ -201,10 +202,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "monk": {
-    "targetHeight": 74,
+    "targetHeight": 85,
     "colors": 32,
     "scaleFrom": "enemy_raver_monk_A.png",
     "sheets": [
@@ -255,10 +257,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "harness": {
-    "targetHeight": 74,
+    "targetHeight": 85,
     "colors": 32,
     "scaleFrom": "enemy_raver_harness_A.png",
     "sheets": [
@@ -309,10 +312,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "queen": {
-    "targetHeight": 72,
+    "targetHeight": 83,
     "colors": 32,
     "scaleFrom": "enemy_raver_queen_A.png",
     "sheets": [
@@ -395,10 +399,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "mullet": {
-    "targetHeight": 70,
+    "targetHeight": 80,
     "colors": 32,
     "scaleFrom": "enemy_hipster_mullet_A.png",
     "sheets": [
@@ -449,7 +454,8 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "extras": {
     "targetHeight": 68,
@@ -695,7 +701,7 @@
     ]
   },
   "punkgirl": {
-    "targetHeight": 68,
+    "targetHeight": 78,
     "colors": 32,
     "scaleFrom": "enemy_punk_girl_A.png",
     "sheets": [
@@ -746,10 +752,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "tourist": {
-    "targetHeight": 70,
+    "targetHeight": 80,
     "colors": 32,
     "scaleFrom": "enemy_tourist_selfie_A.png",
     "sheets": [
@@ -800,10 +807,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "bouncer": {
-    "targetHeight": 90,
+    "targetHeight": 103,
     "colors": 40,
     "scaleFrom": "boss_bouncer_A.png",
     "sheets": [
@@ -883,10 +891,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "shovel": {
-    "targetHeight": 68,
+    "targetHeight": 78,
     "colors": 48,
     "scaleFrom": "hero_shovel_A.png",
     "sheets": [
@@ -1009,10 +1018,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "lolli": {
-    "targetHeight": 68,
+    "targetHeight": 78,
     "colors": 48,
     "scaleFrom": "hero_lolli_A.png",
     "sheets": [
@@ -1108,10 +1118,11 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   },
   "kunst": {
-    "targetHeight": 74,
+    "targetHeight": 85,
     "colors": 48,
     "scaleFrom": "hero_kunst_A.png",
     "sheets": [
@@ -1205,10 +1216,11 @@
       "walk3",
       "walk4"
     ],
-    "dropHalo": true
+    "dropHalo": true,
+    "res": 2
   },
   "schwein": {
-    "targetHeight": 70,
+    "targetHeight": 80,
     "colors": 48,
     "scaleFrom": "hero_schwein_A.png",
     "sheets": [
@@ -1301,6 +1313,7 @@
       "walk2",
       "walk3",
       "walk4"
-    ]
+    ],
+    "res": 2
   }
 }

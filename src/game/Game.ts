@@ -8,6 +8,7 @@ import {
   HITSTOP_HEAVY,
   LEVEL_LEN,
   MAX_ATTACKERS,
+  RES,
   VIEW_H,
   VIEW_W,
 } from './constants'
@@ -123,6 +124,8 @@ interface Projectile {
 
 export interface GameCallbacks {
   onScene: (s: Scene) => void
+  /** the SOUND menu entry (the mute state lives in the page) */
+  onToggleMute?: () => void
 }
 
 export class Game {
@@ -157,6 +160,50 @@ export class Game {
   private comboHits = 0
   private comboT = 0
   private projectiles: Projectile[] = []
+  /** highlighted entry of the menu on screen (title, pause, game over, win) */
+  private menuIdx = 0
+  /** the CONTROLS page of the main menu is open */
+  private showControls = false
+
+  /** the entries of the current scene's menu */
+  private menuItems(): string[] {
+    switch (this.scene) {
+      case 'title':
+        return ['PLAY', 'CONTROLS', `SOUND: ${audio.muted ? 'OFF' : 'ON'}`]
+      case 'paused':
+        return ['RESUME', 'RESTART LEVEL', 'CHANGE FIGHTER', 'MAIN MENU']
+      case 'gameover':
+        return ['RETRY', 'CHANGE FIGHTER', 'MAIN MENU']
+      case 'win':
+        return ['PLAY AGAIN', 'CHANGE FIGHTER', 'MAIN MENU']
+      default:
+        return []
+    }
+  }
+
+  /** up/down moves the highlight; ENTER or X picks. Returns the picked label, or null. */
+  private menuPick(): string | null {
+    const pr = this.input.pressed
+    const items = this.menuItems()
+    if (pr.up || pr.down) {
+      this.menuIdx = (this.menuIdx + (pr.down ? 1 : -1) + items.length) % items.length
+      audio.swing()
+    }
+    if (pr.start || pr.attack) {
+      audio.start()
+      audio.pickup()
+      return items[this.menuIdx]
+    }
+    return null
+  }
+
+  private drawMenu(ctx: CanvasRenderingContext2D, y: number) {
+    this.menuItems().forEach((label, i) => {
+      const on = i === this.menuIdx
+      const text = on ? `> ${label} <` : label
+      drawText(ctx, text, VIEW_W >> 1, y + i * 14, { scale: on ? 1 : 1, align: 'center', color: on ? '#ffe14a' : '#9aa2c4', outline: '#14101c', shadow: on ? '#14101c' : undefined })
+    })
+  }
 
   /** heroes whose sprites exist, in select-screen order */
   private heroes(): HeroId[] {
@@ -197,6 +244,8 @@ export class Game {
   private setScene(s: Scene) {
     this.scene = s
     this.sceneT = 0
+    this.menuIdx = 0
+    this.showControls = false
     this.cb.onScene(s)
   }
 
@@ -225,12 +274,20 @@ export class Game {
     this.sceneT++
     const pr = this.input.pressed
     switch (this.scene) {
-      case 'title':
-        if (pr.start || pr.attack) {
-          audio.start()
-          this.setScene('select')
+      case 'title': {
+        if (this.showControls) {
+          if (pr.start || pr.attack || pr.pause) this.showControls = false
+          return
+        }
+        const pick = this.menuPick()
+        if (pick === 'PLAY') this.setScene('select')
+        else if (pick === 'CONTROLS') this.showControls = true
+        else if (pick?.startsWith('SOUND')) {
+          if (this.cb.onToggleMute) this.cb.onToggleMute()
+          else audio.setMuted(!audio.muted)
         }
         return
+      }
       case 'select':
         if (pr.left || pr.right) {
           const list = this.heroes()
@@ -245,16 +302,35 @@ export class Game {
         }
         if (pr.pause) this.setScene('title')
         return
-      case 'paused':
-        if (pr.pause || pr.start) this.setScene('play')
+      case 'paused': {
+        if (pr.pause) {
+          this.setScene('play')
+          return
+        }
+        const pick = this.menuPick()
+        if (pick === 'RESUME') this.setScene('play')
+        else if (pick === 'RESTART LEVEL') {
+          this.reset()
+          this.setScene('play')
+        } else if (pick === 'CHANGE FIGHTER') this.setScene('select')
+        else if (pick === 'MAIN MENU') this.setScene('title')
         return
+      }
       case 'gameover':
-      case 'win':
-        if (this.sceneT > 60 && (pr.start || pr.attack)) this.setScene('select')
+      case 'win': {
+        const pick = this.sceneT > 60 ? this.menuPick() : null
+        if (pick === 'RETRY' || pick === 'PLAY AGAIN') {
+          this.reset()
+          this.setScene('play')
+          return
+        }
+        if (pick === 'CHANGE FIGHTER') this.setScene('select')
+        else if (pick === 'MAIN MENU') this.setScene('title')
         this.player.t++
         for (const e of this.enemies) physics(e)
         this.fx.update()
         return
+      }
       case 'play':
         if (pr.pause) {
           this.setScene('paused')
@@ -292,7 +368,7 @@ export class Game {
     // throwing moves launch their projectile on the first active frame
     if (p.move?.projectile && (p.state === 'attack' || p.state === 'special') && p.t === p.move.active[0]) {
       const pr = p.move.projectile
-      this.projectiles.push({ x: p.x + p.facing * 16, y: p.y, z: 40, vx: p.facing * pr.speed, sprite: pr.sprite, damage: pr.damage, knockdown: pr.knockdown, rot: 0, t: 0, hit: new Set() })
+      this.projectiles.push({ x: p.x + p.facing * 16, y: p.y, z: 46, vx: p.facing * pr.speed, sprite: pr.sprite, damage: pr.damage, knockdown: pr.knockdown, rot: 0, t: 0, hit: new Set() })
       p.connected = true // the throw counts as a hit for the combo
       audio.swing()
     }
@@ -325,18 +401,18 @@ export class Game {
         audio.whoosh()
       } else if (p.hero.specialFx === 'shuffle') {
         this.fx.music(p.x, p.y, 36)
-        this.fx.popup(p.x, p.y - 96, 'OINK OINK!', '#ffb3c8')
+        this.fx.popup(p.x, p.y - 110, 'OINK OINK!', '#ffb3c8')
         audio.music()
       } else if (p.hero.specialFx === 'gallery') {
         this.galleryT = 110
-        this.fx.popup(p.x, p.y - 108, 'VOILA!', '#f2c14e')
+        this.fx.popup(p.x, p.y - 124, 'VOILA!', '#f2c14e')
         audio.flash()
       } else this.fx.ramDust(p.x - p.facing * 14, p.y, p.facing)
       if (p.hero.sugarRush) {
         p.boostT = p.hero.sugarRush
-        this.fx.popup(p.x, p.y - 96, 'SUGAR RUSH!', '#ff4fa3')
+        this.fx.popup(p.x, p.y - 110, 'SUGAR RUSH!', '#ff4fa3')
       }
-      this.fx.popup(p.x, p.y - 84, p.hero.specialName, '#5af0ff')
+      this.fx.popup(p.x, p.y - 97, p.hero.specialName, '#5af0ff')
     }
     for (const e of this.enemies) {
       updateEnemy(e, p)
@@ -472,28 +548,28 @@ export class Game {
       t.hp -= Math.round(m.damage * a.power)
       t.flash = 6
       audio.hit(false)
-      this.fx.spark(t.x - t.facing * 6, t.y, t.z + 44, false)
+      this.fx.spark(t.x - t.facing * 6, t.y, t.z + 50, false)
       this.freeze = HITSTOP
-      this.fx.popup(t.x, t.y - 92, 'FLEX!', '#ffffff')
+      this.fx.popup(t.x, t.y - 106, 'FLEX!', '#ffffff')
       return
     }
     // SHOVELIST's groove bonus: dazed (dancing) enemies take extra damage
     let move = m
     if (a.isPlayer && t.stunT > 0 && (a as Player).hero.dazeBonus) {
       move = { ...m, damage: Math.round(m.damage * (a as Player).hero.dazeBonus!) }
-      this.fx.popup(t.x, t.y - 92, 'GROOVE!', '#c46bff')
+      this.fx.popup(t.x, t.y - 106, 'GROOVE!', '#c46bff')
     }
     const down = takeHit(t, a, move)
     if (t.isPlayer) (t as Player).calmT = 0
     const heavy = !!m.heavy || down
     audio.hit(heavy)
     if (a.isPlayer && a.state === 'special' && (a as Player).hero.specialFx === 'ram') this.fx.ramHit(t.x - a.facing * 4, t.y, a.facing)
-    this.fx.spark(t.x - t.facing * 6, t.y, t.z + 44, heavy)
-    this.fx.hitGag(t.x, t.y, t.z + 46, a.facing, heavy)
+    this.fx.spark(t.x - t.facing * 6, t.y, t.z + 50, heavy)
+    this.fx.hitGag(t.x, t.y, t.z + 53, a.facing, heavy)
     if (m.stun && !down) {
       t.stunT = Math.round(m.stun * ((t as Enemy).isBoss ? 0.35 : 1))
       t.statue = !!m.statue
-      if (m.statue) this.fx.popup(t.x, t.y - 84 - (t.id % 3) * 9, `${2 + Math.floor(Math.random() * 98)}.000 €`, '#f2c14e')
+      if (m.statue) this.fx.popup(t.x, t.y - 97 - (t.id % 3) * 9, `${2 + Math.floor(Math.random() * 98)}.000 €`, '#f2c14e')
     }
     if (!t.isPlayer && ['monk', 'punkgirl'].includes((t as Enemy).kind)) this.fx.gum(t.x + t.facing * 8, t.y, t.z + 58, t.facing)
     if (t.hp <= 0) {
@@ -513,7 +589,7 @@ export class Game {
       if (e.hp <= 0) {
         const pts = ENEMY_TYPES[e.kind].score
         this.player.score += pts
-        this.fx.popup(e.x, e.y - 80, `+${pts}`)
+        this.fx.popup(e.x, e.y - 92, `+${pts}`)
         if (!e.isBoss && Math.random() < DROP_CHANCE) this.fx.drop(ENEMY_LOOT[Math.floor(Math.random() * ENEMY_LOOT.length)], e.x, e.y)
         if (e.isBoss) {
           this.freeze = 30
@@ -534,8 +610,8 @@ export class Game {
         const dir = (pr.vx > 0 ? 1 : -1) as 1 | -1
         const thrower = { ...this.player, x: pr.x - dir * 8, facing: dir, power: 1 }
         const down = takeHit(e, thrower, { id: 'record', frames: [], active: [0, 0], reach: 0, damage: pr.damage, knockback: 2.6, knockdown: pr.knockdown })
-        this.fx.spark(e.x, e.y, 40, down)
-        this.fx.hitGag(e.x, e.y, 46, dir, down)
+        this.fx.spark(e.x, e.y, 46, down)
+        this.fx.hitGag(e.x, e.y, 53, dir, down)
         audio.hit(down)
         this.freeze = HITSTOP
         this.lastFoe = e
@@ -572,9 +648,9 @@ export class Game {
         e.hitList.add(o.id)
         const pusher = { ...e, power: 1, facing: (e.vx > 0 ? 1 : -1) as 1 | -1 }
         takeHit(o, pusher, { id: 'domino', frames: [], active: [0, 0], reach: 0, damage: 6, knockback: 2.6, knockdown: true })
-        this.fx.spark(o.x, o.y, 40, true)
-        this.fx.hitGag(o.x, o.y, 46, pusher.facing, true)
-        this.fx.popup(o.x, o.y - 92, 'DOMINO!', '#ffe14a')
+        this.fx.spark(o.x, o.y, 46, true)
+        this.fx.hitGag(o.x, o.y, 53, pusher.facing, true)
+        this.fx.popup(o.x, o.y - 106, 'DOMINO!', '#ffe14a')
         audio.hit(true)
         this.shake = Math.max(this.shake, 5)
         this.countHit()
@@ -587,7 +663,7 @@ export class Game {
   /** each enemy's signature: a shout on the wind-up, an effect and a sound on the strike */
   private enemyTrick(e: Enemy, m: Move) {
     const p = this.player
-    if (e.t === 1 && m.say) this.fx.popup(e.x, e.y - 92, m.say, '#ffffff')
+    if (e.t === 1 && m.say) this.fx.popup(e.x, e.y - 106, m.say, '#ffffff')
     if (!m.fx || e.t !== m.active[0]) return
     const front = e.x + e.facing * 22
     switch (m.fx) {
@@ -606,7 +682,7 @@ export class Game {
         audio.hiss()
         if (Math.abs(p.x - front) < 36 && Math.abs(p.y - e.y) < 14 && p.state !== 'down') {
           p.slowT = 80
-          this.fx.popup(p.x, p.y - 84, '*COUGH*', '#b8f0b0')
+          this.fx.popup(p.x, p.y - 97, '*COUGH*', '#b8f0b0')
         }
         break
       case 'gust':
@@ -666,7 +742,7 @@ export class Game {
       if (it.hp) p.hp = Math.min(p.maxHp, p.hp + it.hp)
       if (it.special) p.specialCd = 0
       if (it.score) p.score += it.score
-      this.fx.popup(p.x, p.y - 80, it.hp ? `+${it.hp} ${it.label}` : `+${it.label}`, it.score ? '#ffe14a' : '#7dff5a')
+      this.fx.popup(p.x, p.y - 92, it.hp ? `+${it.hp} ${it.label}` : `+${it.label}`, it.score ? '#ffe14a' : '#7dff5a')
       audio.pickup()
     }
   }
@@ -683,7 +759,7 @@ export class Game {
   // ------------------------------------------------------------ render
   private render() {
     const ctx = this.ctx
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.setTransform(RES, 0, 0, RES, 0, 0)
     ctx.fillStyle = '#05040c'
     ctx.fillRect(0, 0, VIEW_W, VIEW_H)
     if (!this.stage) {
@@ -721,7 +797,7 @@ export class Game {
       ctx.fillStyle = `rgba(255,255,255,${this.fx.flashT * 0.06})`
       ctx.fillRect(0, 0, VIEW_W, VIEW_H)
     }
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.setTransform(RES, 0, 0, RES, 0, 0)
 
     const t = this.sceneT
     switch (this.scene) {
@@ -729,10 +805,13 @@ export class Game {
         dim(ctx, 0.55)
         drawBanner(ctx, [{ text: 'BERLIN', scale: 4, color: '#f2f2f8' }, { text: '3000', scale: 4, color: '#ff3a5a' }], 30)
         drawText(ctx, 'LEVEL 1: QUEUE TO BERG', VIEW_W >> 1, 112, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
-        if (Math.floor(t / 25) % 2 === 0) drawText(ctx, 'CLICK HERE, THEN PRESS ENTER', VIEW_W >> 1, 134, { align: 'center', color: '#ffe14a', outline: '#14101c' })
-        drawText(ctx, 'ARROWS/WASD MOVE   X HIT   C JUMP   V SPECIAL', VIEW_W >> 1, 168, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
-        drawText(ctx, 'COMBO: KEEP HITTING X - RUN: TAP TWICE - JUMP + X', VIEW_W >> 1, 180, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
-        drawText(ctx, 'M MUTE   ESC PAUSE', VIEW_W >> 1, 192, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
+        if (this.showControls) {
+          this.drawControls(ctx)
+          return
+        }
+        this.drawMenu(ctx, 136)
+        if (t < 400 || Math.floor(t / 25) % 2 === 0)
+          drawText(ctx, 'UP/DOWN CHOOSE   ENTER OR X OK   (CLICK THE GAME FIRST)', VIEW_W >> 1, 196, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
         return
       case 'select':
         this.drawSelect(ctx, t)
@@ -748,12 +827,14 @@ export class Game {
         if (this.scene === 'play' && t < 150 && this.waveIdx === 0)
           drawBanner(ctx, [{ text: 'LEVEL 1', scale: 2, color: '#ffe14a' }, { text: 'QUEUE TO BERG', scale: 3, color: '#ffffff' }], 70)
         if (this.scene === 'paused') {
-          dim(ctx, 0.5)
-          drawBanner(ctx, [{ text: 'PAUSE', scale: 3, color: '#ffffff' }], 92)
+          dim(ctx, 0.6)
+          drawBanner(ctx, [{ text: 'PAUSE', scale: 3, color: '#ffffff' }], 56)
+          this.drawMenu(ctx, 100)
         }
         if (this.scene === 'gameover') {
           dim(ctx, Math.min(0.6, t / 60))
-          drawBanner(ctx, [{ text: 'HEUTE', scale: 3, color: '#ff3a5a' }, { text: 'LEIDER NICHT.', scale: 3, color: '#ff3a5a' }, { text: 'PRESS ENTER TO RETRY', scale: 1, color: '#ffffff' }], 62)
+          drawBanner(ctx, [{ text: 'HEUTE', scale: 3, color: '#ff3a5a' }, { text: 'LEIDER NICHT.', scale: 3, color: '#ff3a5a' }], 52)
+          if (t > 60) this.drawMenu(ctx, 128)
         }
         if (this.scene === 'win') {
           dim(ctx, Math.min(0.55, t / 60))
@@ -763,13 +844,32 @@ export class Game {
               { text: 'KOMM REIN,', scale: 3, color: '#7dff5a' },
               { text: 'VIEL SPASS!', scale: 3, color: '#7dff5a' },
               { text: `SCORE ${this.player.score}`, scale: 2, color: '#ffe14a' },
-              { text: 'PRESS ENTER TO PLAY AGAIN', scale: 1, color: '#ffffff' },
             ],
-            62,
+            44,
           )
+          if (t > 60) this.drawMenu(ctx, 136)
         }
       }
     }
+  }
+
+  /** CONTROLS page of the main menu */
+  private drawControls(ctx: CanvasRenderingContext2D) {
+    ctx.fillStyle = 'rgba(26,20,40,0.9)'
+    ctx.fillRect(36, 122, VIEW_W - 72, 88)
+    const rows: [string, string][] = [
+      ['ARROWS / WASD', 'MOVE'],
+      ['X', 'HIT - KEEP HITTING FOR A COMBO'],
+      ['C / SPACE', 'JUMP - JUMP + X ATTACKS IN THE AIR'],
+      ['V', 'SPECIAL MOVE (WHEN THE BAR IS FULL)'],
+      ['TAP TWICE', 'RUN - X WHILE RUNNING: DASH ATTACK'],
+      ['ESC / P', 'PAUSE MENU      M  SOUND ON/OFF'],
+    ]
+    rows.forEach(([k, v], i) => {
+      drawText(ctx, k, 46, 130 + i * 11, { color: '#ffe14a', outline: '#14101c' })
+      drawText(ctx, v, 128, 130 + i * 11, { color: '#ffffff', outline: '#14101c' })
+    })
+    if (Math.floor(this.sceneT / 25) % 2 === 0) drawText(ctx, 'ENTER: BACK', VIEW_W >> 1, 200, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
   }
 
   /** PSYCHEDELIC RAVE: shifting rainbow bands washed over the scene */
@@ -872,7 +972,7 @@ export class Game {
     if (p && p.state === 'special' && p.move && p.hero.specialFx === 'ram' && p.t >= p.move.active[0] && p.t < p.move.active[1] - 6)
       drawFrame(ctx, fx, 'ramlines', p.x - cam - p.facing * 30, p.y - 2, p.facing, { alpha: 0.85 })
     drawFighter(ctx, f, cam)
-    if (!f.isPlayer && f.state === 'down' && f.hp > 0) drawStars(ctx, f.x - cam - f.facing * 22, f.y - 14, this.tick)
-    if (f.stunT > 0) drawStars(ctx, f.x - cam, f.y - 78, this.tick)
+    if (!f.isPlayer && f.state === 'down' && f.hp > 0) drawStars(ctx, f.x - cam - f.facing * 25, f.y - 16, this.tick)
+    if (f.stunT > 0) drawStars(ctx, f.x - cam, f.y - 90, this.tick)
   }
 }
