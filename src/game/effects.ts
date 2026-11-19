@@ -60,6 +60,25 @@ const POCKETS: [Debris['sheet'], string][] = [
   ['items', 'cash'],
 ]
 
+/** a puff of vape smoke drifting up */
+interface Cloud {
+  x: number
+  y: number
+  z: number
+  vx: number
+  t: number
+  life: number
+}
+
+/** a streak of wind from the fan */
+interface Streak {
+  x: number
+  y: number
+  len: number
+  dir: 1 | -1
+  t: number
+}
+
 /** a Berlin pigeon startled by a KO, flapping away */
 interface Pigeon {
   x: number
@@ -98,6 +117,23 @@ export class Effects {
   bits: Bit[] = []
   debris: Debris[] = []
   pigeons: Pigeon[] = []
+  clouds: Cloud[] = []
+  streaks: Streak[] = []
+
+  /** a vape cloud in front of someone's face */
+  vape(x: number, y: number, z: number, dir: 1 | -1) {
+    for (let i = 0; i < 6; i++) this.clouds.push({ x: x + dir * i * 5, y: y + rand(-3, 3), z: z + rand(-4, 4), vx: dir * rand(0.2, 0.6), t: -i * 2, life: 70 })
+  }
+
+  /** wind streaks blowing away from a fan */
+  gust(x: number, y: number, dir: 1 | -1) {
+    for (let i = 0; i < 9; i++) this.streaks.push({ x: x + rand(-4, 10) * dir, y: y - rand(8, 60), len: rand(10, 26), dir, t: -Math.floor(rand(0, 6)) })
+  }
+
+  /** a small camera flash without the full-screen blink (selfies) */
+  snap(x: number, y: number, z: number) {
+    this.play('flash', x, y, z, 2)
+  }
   popups: Popup[] = []
   pickups: Pickup[] = []
   /** frames left of the full-screen white blink after a camera flash */
@@ -132,7 +168,7 @@ export class Effects {
     this.pigeons.push({ x, y, z: 4, vx: Math.random() < 0.5 ? -1.4 : 1.4, t: 0 })
   }
 
-  /** SHOVEL RAVE: music notes and psychedelic light bursting from the shovel */
+  /** PSYCHEDELIC RAVE: music notes and psychedelic light bursting from the shovel */
   music(x: number, y: number, z: number) {
     this.anims.push({ frames: Array.from({ length: 8 }, (_, i) => `music${i + 1}`), rate: 6, t: 0, x, y, z, facing: 1 })
   }
@@ -236,6 +272,17 @@ export class Effects {
       p.z += 1.1 + Math.sin(p.t * 0.6) * 0.6
     }
     this.pigeons = this.pigeons.filter((p) => p.z < 260)
+    for (const c of this.clouds) {
+      c.t++
+      c.x += c.vx
+      c.z += 0.25
+    }
+    this.clouds = this.clouds.filter((c) => c.t < c.life)
+    for (const s of this.streaks) {
+      s.t++
+      s.x += s.dir * 4
+    }
+    this.streaks = this.streaks.filter((s) => s.t < 18)
     if (this.flashT > 0) this.flashT--
     for (const p of this.popups) {
       p.t++
@@ -278,6 +325,18 @@ export class Effects {
     }
     for (const d of this.debris) if (d.z > 0) drawFrame(ctx, sheet(d.sheet), d.name, d.x - camX, d.y - d.z, 1, { tilt: d.rot })
     for (const p of this.pigeons) drawFrame(ctx, fx, 'pigeon', p.x - camX, p.y - p.z, p.vx > 0 ? 1 : -1)
+    for (const c of this.clouds) {
+      if (c.t < 0) continue
+      const k = c.t / c.life
+      drawFrame(ctx, fx, 'puff', c.x - camX, c.y - c.z, 1, { scale: k < 0.3 ? 2 : 3, alpha: 0.75 * (1 - k) })
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'
+    for (const s of this.streaks) {
+      if (s.t < 0) continue
+      ctx.globalAlpha = 1 - s.t / 18
+      ctx.fillRect(Math.round(s.x - camX - (s.dir > 0 ? 0 : s.len)), Math.round(s.y), Math.round(s.len), 1)
+    }
+    ctx.globalAlpha = 1
     for (const b of this.bits) {
       if (b.t > b.life - 20 && Math.floor(b.t / 2) % 2) continue
       ctx.fillStyle = b.color

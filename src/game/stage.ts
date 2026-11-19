@@ -14,11 +14,13 @@ import { sheet, type Sheet } from './sprites'
 
 export const DOOR_X = level.doorX
 /** x positions of the gaps in the barriers, where enemies step out of the queue */
-export const QUEUE_GAPS = [640, 1100, 1480, 1620]
+/** the open stretch of street at the start, before the first building (shows the skyline) */
+export const OPEN = level.open
+export const QUEUE_GAPS = [640, 1100, 1480, 1620].map((x) => x + OPEN)
 /** where the queue starts (just past the Späti) */
-const QUEUE_START = 410
+const QUEUE_START = 410 + OPEN
 /** lamp posts stand on the joins between building segments and hide the seams */
-const LAMPS = level.segments.slice(1).map((s) => s.x)
+const LAMPS = level.segments.map((s) => s.x)
 
 function mulberry32(seed: number) {
   return () => {
@@ -105,9 +107,9 @@ function buildQueue(): QueuePerson[] {
 
 /** decorations on the kerb before the queue starts: [frame, x] */
 const DECOR: [string, number][] = [
-  ['tree', 46],
-  ['pillar', 150],
-  ['fencepost', 214],
+  ['pillar', 40],
+  ['tree', 46 + OPEN],
+  ['fencepost', 214 + OPEN],
 ]
 
 /** Barriers, lamp posts and kerb decorations, drawn in front of the queue. */

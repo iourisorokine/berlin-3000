@@ -13,9 +13,9 @@ import {
 } from './constants'
 import { drawStars, Effects, type PickupKind } from './effects'
 import { ENEMY_TYPES, makeEnemy, updateEnemy, type Enemy, type EnemyKind } from './enemy'
-import { canBeHit, drawFighter, inReach, isActive, physics, setState, takeHit, type Fighter } from './fighter'
+import { canBeHit, drawFighter, inReach, isActive, physics, setState, takeHit, type Fighter, type Move } from './fighter'
 import { drawText } from './font'
-import { dim, drawBanner, drawGo, drawHud } from './hud'
+import { dim, drawBanner, drawCombo, drawGo, drawHud } from './hud'
 import { Input } from './input'
 import { FixedLoop } from './loop'
 import { HERO_ORDER, HEROES, type HeroId } from './heroes'
@@ -35,7 +35,7 @@ const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolea
   glowstick: { label: '200', score: 200 },
 }
 const ENEMY_LOOT: PickupKind[] = ['doner', 'currywurst', 'pretzel', 'cash', 'phone']
-import { DOOR_X, QUEUE_GAPS, Stage } from './stage'
+import { DOOR_X, OPEN, QUEUE_GAPS, Stage } from './stage'
 
 export type Scene = 'loading' | 'title' | 'select' | 'play' | 'paused' | 'gameover' | 'win'
 
@@ -62,7 +62,15 @@ const WAVES: Wave[] = [
     ],
   },
   {
-    cam: 380,
+    cam: OPEN,
+    spawns: [
+      { kind: 'queen', from: 'right', delay: 20 },
+      { kind: 'monk', from: 'left', delay: 120 },
+      { kind: 'tourist', from: 'right', delay: 200 },
+    ],
+  },
+  {
+    cam: 380 + OPEN,
     spawns: [
       { kind: 'punkgirl', from: 'queue', gap: QUEUE_GAPS[0], delay: 0 },
       { kind: 'mullet', from: 'right', delay: 60 },
@@ -70,7 +78,7 @@ const WAVES: Wave[] = [
     ],
   },
   {
-    cam: 840,
+    cam: 840 + OPEN,
     spawns: [
       { kind: 'harness', from: 'queue', gap: QUEUE_GAPS[1], delay: 0 },
       { kind: 'tourist', from: 'right', delay: 40 },
@@ -79,7 +87,7 @@ const WAVES: Wave[] = [
     ],
   },
   {
-    cam: 1300,
+    cam: 1300 + OPEN,
     spawns: [
       { kind: 'queen', from: 'queue', gap: QUEUE_GAPS[2], delay: 0 },
       { kind: 'harness', from: 'right', delay: 30 },
@@ -127,8 +135,11 @@ export class Game {
   private ghostHp = 1
   private cleared = false
   private heroId: HeroId = 'jule'
-  /** frames left of the psychedelic colour wash (SHOVEL RAVE) */
+  /** frames left of the psychedelic colour wash (PSYCHEDELIC RAVE) */
   private psyT = 0
+  /** hits landed in a row (resets after a pause) and frames left before it resets */
+  private comboHits = 0
+  private comboT = 0
 
   private cb: GameCallbacks
 
@@ -179,6 +190,8 @@ export class Game {
     this.lastFoe = null
     this.ghostHp = 1
     this.cleared = false
+    this.comboHits = 0
+    this.comboT = 0
   }
 
   // ------------------------------------------------------------ update
@@ -247,7 +260,14 @@ export class Game {
     if (atk[0]) atk[0].slot = atk[0].x < p.x ? -1 : 1
     if (atk[1]) atk[1].slot = atk[0].slot === -1 ? 1 : -1
 
+    if (this.comboT > 0 && --this.comboT === 0) this.comboHits = 0
     if (p.state !== 'dead') updatePlayer(p, this.input)
+    if (p.running && p.t % 9 === 0) this.fx.dust(p.x - p.facing * 8, p.y)
+    if (p.doubleJumped) {
+      p.doubleJumped = false
+      this.fx.dust(p.x, p.y - p.z + 4)
+      audio.swing()
+    }
     if (p.state === 'special' && p.move && p.t === p.move.active[0]) {
       if (p.hero.specialFx === 'shockwave') {
         this.fx.shockwave(p.x, p.y)
@@ -262,16 +282,7 @@ export class Game {
     }
     for (const e of this.enemies) {
       updateEnemy(e, p)
-      if (e.state === 'attack' && e.move?.fx && e.t === e.move.active[0]) {
-        if (e.move.fx === 'flash') {
-          this.fx.flash(e.x + e.facing * 24, e.y, 52)
-          audio.flash()
-        } else {
-          this.fx.stomp(e.x, e.y)
-          this.shake = 10
-          audio.thud()
-        }
-      }
+      if (e.state === 'attack' && e.move) this.enemyTrick(e, e.move)
     }
 
     for (const f of [p as Fighter, ...this.enemies]) {
@@ -306,6 +317,7 @@ export class Game {
       }
 
     this.resolveHits()
+    this.dominoes()
     this.updatePickups()
     for (const b of this.props) updateBreakable(b)
     this.props = this.props.filter((b) => !gone(b))
@@ -380,7 +392,7 @@ export class Game {
     }
     // enemy attacks
     for (const e of this.enemies) {
-      if (!e.move || e.state !== 'attack' || !isActive(e)) continue
+      if (!e.move || e.move.harmless || e.state !== 'attack' || !isActive(e)) continue
       if (!canBeHit(p) || e.hitList.has(p.id) || !inReach(e, p, e.move)) continue
       e.hitList.add(p.id)
       this.hit(e, p)
@@ -389,7 +401,23 @@ export class Game {
 
   private hit(a: Fighter, t: Fighter) {
     const m = a.move!
-    const down = takeHit(t, a, m)
+    // armoured wind-up (HARNESS BOY flexing): takes the damage but does not flinch
+    if (t.state === 'attack' && t.move?.armor && t.t < t.move.active[0] && t.hp > m.damage) {
+      t.hp -= Math.round(m.damage * a.power)
+      t.flash = 6
+      audio.hit(false)
+      this.fx.spark(t.x - t.facing * 6, t.y, t.z + 44, false)
+      this.freeze = HITSTOP
+      this.fx.popup(t.x, t.y - 92, 'FLEX!', '#ffffff')
+      return
+    }
+    // SHOVELIST's groove bonus: dazed (dancing) enemies take extra damage
+    let move = m
+    if (a.isPlayer && t.stunT > 0 && (a as Player).hero.dazeBonus) {
+      move = { ...m, damage: Math.round(m.damage * (a as Player).hero.dazeBonus!) }
+      this.fx.popup(t.x, t.y - 92, 'GROOVE!', '#c46bff')
+    }
+    const down = takeHit(t, a, move)
     const heavy = !!m.heavy || down
     audio.hit(heavy)
     if (a.isPlayer && a.state === 'special' && (a as Player).hero.specialFx === 'ram') this.fx.ramHit(t.x - a.facing * 4, t.y, a.facing)
@@ -407,7 +435,10 @@ export class Game {
       const e = t as Enemy
       this.lastFoe = e
       this.lastFoeT = 180
-      this.player.score += m.damage * 10
+      this.countHit()
+      // every hit you land charges the special
+      this.player.specialCd = Math.max(0, this.player.specialCd - move.damage * 5)
+      this.player.score += Math.round(move.damage * 10 * this.multiplier())
       if (e.hp <= 0) {
         const pts = ENEMY_TYPES[e.kind].score
         this.player.score += pts
@@ -418,6 +449,88 @@ export class Game {
           this.shake = 20
         }
       }
+    }
+  }
+
+  private countHit() {
+    this.comboHits++
+    this.comboT = 100
+  }
+
+  /** score multiplier from the combo: +15 % per hit in a row, up to x2.35 */
+  private multiplier() {
+    return 1 + Math.min(this.comboHits - 1, 9) * 0.15
+  }
+
+  /** an enemy sent flying knocks over whoever it crashes into */
+  private dominoes() {
+    for (const e of this.enemies) {
+      if (e.state !== 'fall' || Math.abs(e.vx) < 1.6 || e.z > 30) continue
+      for (const o of this.enemies) {
+        if (o === e || !canBeHit(o) || e.hitList.has(o.id)) continue
+        if (Math.abs(o.x - e.x) > 16 || Math.abs(o.y - e.y) > 10) continue
+        e.hitList.add(o.id)
+        const pusher = { ...e, power: 1, facing: (e.vx > 0 ? 1 : -1) as 1 | -1 }
+        takeHit(o, pusher, { id: 'domino', frames: [], active: [0, 0], reach: 0, damage: 6, knockback: 2.6, knockdown: true })
+        this.fx.spark(o.x, o.y, 40, true)
+        this.fx.hitGag(o.x, o.y, 46, pusher.facing, true)
+        this.fx.popup(o.x, o.y - 92, 'DOMINO!', '#ffe14a')
+        audio.hit(true)
+        this.shake = Math.max(this.shake, 5)
+        this.countHit()
+        this.player.score += Math.round(100 * this.multiplier())
+        if (o.hp <= 0) this.fx.confetti(o.x, o.y, 40)
+      }
+    }
+  }
+
+  /** each enemy's signature: a shout on the wind-up, an effect and a sound on the strike */
+  private enemyTrick(e: Enemy, m: Move) {
+    const p = this.player
+    if (e.t === 1 && m.say) this.fx.popup(e.x, e.y - 92, m.say, '#ffffff')
+    if (!m.fx || e.t !== m.active[0]) return
+    const front = e.x + e.facing * 22
+    switch (m.fx) {
+      case 'flash':
+        this.fx.flash(front, e.y, 52)
+        audio.click()
+        audio.flash()
+        break
+      case 'stomp':
+        this.fx.stomp(e.x, e.y)
+        this.shake = 10
+        audio.thud()
+        break
+      case 'vape':
+        this.fx.vape(e.x + e.facing * 14, e.y, 60, e.facing)
+        audio.hiss()
+        if (Math.abs(p.x - front) < 36 && Math.abs(p.y - e.y) < 14 && p.state !== 'down') {
+          p.slowT = 80
+          this.fx.popup(p.x, p.y - 84, '*COUGH*', '#b8f0b0')
+        }
+        break
+      case 'gust':
+        this.fx.gust(front, e.y, e.facing)
+        audio.whoosh()
+        break
+      case 'gum':
+        this.fx.gum(e.x + e.facing * 8, e.y, 60, e.facing)
+        audio.pop()
+        break
+      case 'click':
+        audio.click()
+        break
+      case 'thump':
+        this.shake = Math.max(this.shake, 7)
+        this.fx.dust(front, e.y)
+        audio.thud()
+        break
+      case 'selfie':
+        this.fx.snap(e.x + e.facing * 20, e.y, 78)
+        audio.click()
+        p.score = Math.max(0, p.score - 50)
+        this.fx.popup(p.x, p.y - 30, '-50', '#ff7a7a')
+        break
     }
   }
 
@@ -507,7 +620,7 @@ export class Game {
         drawText(ctx, 'LEVEL 1: QUEUE TO BERG', VIEW_W >> 1, 112, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
         if (Math.floor(t / 25) % 2 === 0) drawText(ctx, 'CLICK HERE, THEN PRESS ENTER', VIEW_W >> 1, 134, { align: 'center', color: '#ffe14a', outline: '#14101c' })
         drawText(ctx, 'ARROWS/WASD MOVE   X HIT   C JUMP   V SPECIAL', VIEW_W >> 1, 168, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
-        drawText(ctx, 'KEEP HITTING X FOR A COMBO - JUMP + X = AIR ATTACK', VIEW_W >> 1, 180, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
+        drawText(ctx, 'COMBO: KEEP HITTING X - RUN: TAP TWICE - JUMP + X', VIEW_W >> 1, 180, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
         drawText(ctx, 'M MUTE   ESC PAUSE', VIEW_W >> 1, 192, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
         return
       case 'select':
@@ -519,6 +632,7 @@ export class Game {
       case 'win': {
         const boss = this.enemies.find((e) => e.isBoss) ?? null
         drawHud(ctx, this.player, this.lastFoeT > 0 ? this.lastFoe : null, boss, this.tick, this.ghostHp)
+        if (this.scene === 'play') drawCombo(ctx, this.comboHits, this.comboT)
         if (this.scene === 'play' && !this.waveActive && this.waveIdx > 0 && this.waveIdx < WAVES.length) drawGo(ctx, this.tick)
         if (this.scene === 'play' && t < 150 && this.waveIdx === 0)
           drawBanner(ctx, [{ text: 'LEVEL 1', scale: 2, color: '#ffe14a' }, { text: 'QUEUE TO BERG', scale: 3, color: '#ffffff' }], 70)
@@ -547,7 +661,7 @@ export class Game {
     }
   }
 
-  /** SHOVEL RAVE: shifting rainbow bands washed over the scene */
+  /** PSYCHEDELIC RAVE: shifting rainbow bands washed over the scene */
   private drawPsychedelic(ctx: CanvasRenderingContext2D) {
     const k = Math.min(1, this.psyT / 20)
     ctx.save()
@@ -579,10 +693,11 @@ export class Game {
       const s = sheet(h.sheet)
       drawPortrait(ctx, s, on ? 'portrait_angry' : 'portrait_neutral', cx - w / 2 + 6, 42)
       const frames = on ? h.anim.idle : [h.anim.idle[0]]
-      drawFrame(ctx, s, frames[Math.floor(t / h.anim.idleRate) % frames.length], cx + 20, 152, 1, { alpha: on ? 1 : 0.55 })
-      const big = h.name.length <= 8
-      drawText(ctx, h.name, cx, big ? 158 : 162, { scale: big ? 2 : 1, align: 'center', color: on ? h.color : '#77708a', outline: '#14101c' })
-      drawText(ctx, h.tagline, cx, 177, { align: 'center', color: on ? '#ffffff' : '#77708a', outline: '#14101c' })
+      drawFrame(ctx, s, frames[Math.floor(t / h.anim.idleRate) % frames.length], cx + 20, 144, 1, { alpha: on ? 1 : 0.55 })
+      const big = h.name.length <= 9
+      drawText(ctx, h.name, cx, big ? 150 : 154, { scale: big ? 2 : 1, align: 'center', color: on ? h.color : '#77708a', outline: '#14101c' })
+      drawText(ctx, h.tagline, cx, 167, { align: 'center', color: on ? '#ffffff' : '#77708a', outline: '#14101c' })
+      drawText(ctx, h.trait, cx, 177, { align: 'center', color: on ? h.color : '#5a5470', outline: '#14101c' })
     })
     if (Math.floor(t / 25) % 2 === 0) drawText(ctx, '< >  CHOOSE     ENTER / X  FIGHT', VIEW_W >> 1, 200, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
   }

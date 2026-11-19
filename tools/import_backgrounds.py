@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -28,6 +28,8 @@ FAR_S = 0.18              # skyline scale: the whole TV tower fits on screen
 FAR_PARALLAX = 0.12
 FAR_HORIZON = 122         # art row where the skyline's ground line sits (hidden behind the kerb)
 FAR_OFFSET = -150         # the far layer starts left of the screen, so the tower stands above the low wall of screen 1
+OPEN_START = 384          # one open screen of street before the first building: the skyline shows in full
+FAR_BRIGHTNESS = 1.25     # lifts the night skyline a little so it reads behind the action
 SEGMENTS = ["stage_01_seg_a", "stage_01_seg_b", "stage_01_seg_b", "stage_01_seg_c", "stage_01_seg_d"]
 DOOR_IMAGE_X = 1000       # centre of the club door in stage_01_seg_d.png (image px)
 OUTLINE = np.array([20, 16, 28])
@@ -69,7 +71,7 @@ def right_edge(rgba: np.ndarray) -> int:
 
 
 def build_mid():
-    parts, x = [], 0
+    parts, x = [], OPEN_START
     for i, name in enumerate(SEGMENTS):
         rgba = keyed(name)
         base = base_row(rgba)
@@ -111,6 +113,7 @@ def build_mid():
     d_name, d_x, _ = parts[-1]
     meta = {
         "levelLen": level_len,
+        "open": OPEN_START,
         "wallBase": WALL_BASE,
         "doorX": round(d_x + DOOR_IMAGE_X * S),
         "segments": [{"name": n, "x": px, "w": im.width} for n, px, im in parts],
@@ -152,6 +155,8 @@ def build_far(level_len: int):
         x, flip = x + w, not flip
 
     im = Image.fromarray(canvas).resize((round(far_w * FAR_S), round(H * FAR_S)), Image.BOX)
+    im = ImageEnhance.Brightness(im).enhance(FAR_BRIGHTNESS)
+    im = ImageEnhance.Color(im).enhance(1.15)
     im = im.quantize(64, method=Image.Quantize.MEDIANCUT).convert("RGB")
     out = Image.new("RGB", (im.width, VIEW_H), tuple(int(c) for c in img[-1, 0]))
     out.paste(im, (0, FAR_HORIZON - round(870 * FAR_S)))

@@ -71,6 +71,8 @@ export interface DrawOpts {
   flash?: boolean
   /** rotation in radians around the feet (positive = falls backwards) */
   tilt?: number
+  /** whole-pixel zoom (effects only) */
+  scale?: number
   alpha?: number
 }
 
@@ -87,7 +89,7 @@ export function drawFrame(
   const f = s.frames[name] ?? s.frames.idle1
   ctx.save()
   ctx.translate(Math.round(x), Math.round(y))
-  ctx.scale(facing, 1)
+  ctx.scale(facing * (opts.scale ?? 1), opts.scale ?? 1)
   if (opts.tilt) ctx.rotate(-opts.tilt)
   if (opts.alpha !== undefined) ctx.globalAlpha = opts.alpha
   ctx.drawImage(s.img, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)

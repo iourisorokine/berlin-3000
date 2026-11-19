@@ -1,4 +1,4 @@
-import { SPECIAL_COOLDOWN, VIEW_H, VIEW_W } from './constants'
+import { VIEW_H, VIEW_W } from './constants'
 import type { Enemy } from './enemy'
 import { drawText } from './font'
 import type { Player } from './player'
@@ -39,7 +39,7 @@ export function drawHud(ctx: CanvasRenderingContext2D, p: Player, foe: Enemy | n
   const k = p.hp / p.maxHp
   bar(ctx, 42, 15, 104, 6, k, k > 0.3 ? '#ffd23a' : '#ff4a3a', ghostHp)
   const ready = p.specialCd <= 0
-  bar(ctx, 42, 25, 60, 3, 1 - p.specialCd / SPECIAL_COOLDOWN, ready ? '#5af0ff' : '#3a7aa0')
+  bar(ctx, 42, 25, 60, 3, 1 - p.specialCd / p.hero.specialCooldown, ready ? '#5af0ff' : '#3a7aa0')
   if (ready && Math.floor(tick / 15) % 2 === 0) drawText(ctx, 'SPECIAL V', 106, 23, { color: '#5af0ff', outline: OUT })
 
   // last enemy hit
@@ -63,6 +63,17 @@ export function drawHud(ctx: CanvasRenderingContext2D, p: Player, foe: Enemy | n
       drawPortrait(ctx, s, face, x - 37, VIEW_H - 43)
     }
   }
+}
+
+/** "7 HITS" on the right while a combo is going */
+export function drawCombo(ctx: CanvasRenderingContext2D, hits: number, t: number) {
+  if (hits < 2) return
+  const color = hits >= 10 ? '#ff3aa8' : hits >= 5 ? '#ffe14a' : '#ffffff'
+  const pop = t > 92 ? 1 : 0
+  drawText(ctx, String(hits), VIEW_W - 8, 48 - pop, { scale: 3, align: 'right', color, outline: OUT, shadow: OUT })
+  drawText(ctx, 'HITS', VIEW_W - 8, 72, { align: 'right', color, outline: OUT })
+  if (hits >= 10) drawText(ctx, 'WAHNSINN!', VIEW_W - 8, 82, { align: 'right', color: '#ff3aa8', outline: OUT })
+  else if (hits >= 5) drawText(ctx, 'GEIL!', VIEW_W - 8, 82, { align: 'right', color: '#ffe14a', outline: OUT })
 }
 
 export function drawGo(ctx: CanvasRenderingContext2D, tick: number) {

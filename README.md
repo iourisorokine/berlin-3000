@@ -22,9 +22,10 @@ The game is then live at https://iourisorokine.github.io/berlin-3000/
 | key | action |
 | --- | --- |
 | arrows / WASD | move (left/right and in depth) |
-| X (or J) | hit; press 3 times for the combo |
-| C / Space (or K) | jump; X in the air = air attack |
-| V (or L) | special move (recharges in 6 s) |
+| X (or J) | hit; keep hitting for the combo (hits in a row raise the score multiplier) |
+| C / Space (or K) | jump; X in the air = air attack; JULE can jump again in mid-air |
+| tap left/right twice | run; X while running = dash attack, jump while running = long jump |
+| V (or L) | special move (recharges over time, faster with every hit you land) |
 | Esc / P | pause |
 | M | mute |
 

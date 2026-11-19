@@ -1,31 +1,32 @@
 {
- "levelLen": 2295,
+ "levelLen": 2679,
+ "open": 384,
  "wallBase": 128,
- "doorX": 2144,
+ "doorX": 2528,
  "segments": [
   {
    "name": "stage_01_seg_a",
-   "x": 0,
+   "x": 384,
    "w": 461
   },
   {
    "name": "stage_01_seg_b",
-   "x": 461,
+   "x": 845,
    "w": 461
   },
   {
    "name": "stage_01_seg_b",
-   "x": 922,
+   "x": 1306,
    "w": 461
   },
   {
    "name": "stage_01_seg_c",
-   "x": 1383,
+   "x": 1767,
    "w": 461
   },
   {
    "name": "stage_01_seg_d",
-   "x": 1844,
+   "x": 2228,
    "w": 451
   }
  ],

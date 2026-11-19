@@ -44,8 +44,14 @@ export interface Move {
   stun?: number
   /** forward speed during the active frames */
   lunge?: number
-  /** extra visual at the first active frame */
-  fx?: 'flash' | 'stomp'
+  /** the attacker's trick at the first active frame (effect + sound) */
+  fx?: 'flash' | 'stomp' | 'vape' | 'gust' | 'gum' | 'selfie' | 'click' | 'thump'
+  /** shouted when the wind-up starts */
+  say?: string
+  /** does not flinch when hit during the wind-up */
+  armor?: boolean
+  /** a taunt: plays, but never hurts */
+  harmless?: boolean
 }
 
 // Enemy moves live in enemy.ts; heroes' moves in heroes.ts.
@@ -102,6 +108,8 @@ export interface Fighter {
   flash: number
   /** frames left dazed (from a stun move) */
   stunT: number
+  /** running (players): faster walk cycle */
+  running?: boolean
   /** walking speed multiplier */
   speed: number
   /** damage multiplier */
@@ -203,6 +211,7 @@ export function takeHit(t: Fighter, a: Fighter, m: Move): boolean {
   const down = m.knockdown || t.hp <= 0
   if (down) {
     t.stunT = 0
+    t.hitList.clear()
     setState(t, 'fall')
     t.vz = 3.4
     t.z = Math.max(t.z, 1)
@@ -273,7 +282,7 @@ function pose(f: Fighter): { name: string; tilt: number; bob: number } {
     }
     case 'walk': {
       const w = f.anim.walk
-      if (w) return { name: w[Math.floor(f.t / 7) % w.length], tilt: 0, bob: 0 }
+      if (w) return { name: w[Math.floor(f.t / (f.running ? 4 : 7)) % w.length], tilt: 0, bob: 0 }
       // no walk-cycle sheet yet: idle frames + a step bob
       const step = Math.floor(f.t / 8) % 2
       return { name: f.anim.idle[step % f.anim.idle.length], tilt: 0, bob: step ? -1 : 0 }

@@ -4,7 +4,8 @@ import type { SheetKey } from './sprites'
 export type HeroId = 'jule' | 'kalle' | 'shovel'
 
 /** order on the fighter-select screen */
-export const HERO_ORDER: HeroId[] = ['jule', 'kalle', 'shovel']
+// KALLE is kept in the code but off the select screen until his replacement exists
+export const HERO_ORDER: HeroId[] = ['jule', 'shovel']
 
 /**
  * Everything that makes a playable hero different. Frame names come from
@@ -23,6 +24,17 @@ export interface HeroDef {
   anim: AnimSet
   combo: Move[]
   air: Move
+  /** attack while running (double-tap a direction to run) */
+  dash: Move
+  runSpeed: number
+  /** frames for the special to recharge on its own; every hit you land speeds it up */
+  specialCooldown: number
+  /** can jump again in mid-air */
+  doubleJump?: boolean
+  /** damage multiplier against dazed (dancing) enemies */
+  dazeBonus?: number
+  /** one line on the select screen about what makes this hero different */
+  trait: string
   special: Move
   specialName: string
   /** extra visual for the special */
@@ -84,6 +96,11 @@ export const HEROES: Record<HeroId, HeroDef> = {
     },
     specialName: 'BASS DROP',
     specialFx: 'shockwave',
+    dash: { id: 'dashkick', frames: [f('kick1', 4), f('kick2', 16)], active: [4, 16], reach: 40, damage: 10, knockback: 3, knockdown: true, lunge: 3.2 },
+    runSpeed: 2.9,
+    specialCooldown: 300,
+    doubleJump: true,
+    trait: 'FAST - DOUBLE JUMP',
   },
   kalle: {
     id: 'kalle',
@@ -137,10 +154,14 @@ export const HEROES: Record<HeroId, HeroDef> = {
     },
     specialName: 'MOHAWK RAM',
     specialFx: 'ram',
+    dash: { id: 'dashupper', frames: [f('upper1', 4), f('upper2', 16)], active: [4, 14], reach: 32, damage: 12, knockback: 3, knockdown: true, lunge: 2.6 },
+    runSpeed: 2.4,
+    specialCooldown: 360,
+    trait: 'HEAVY HITTER',
   },
   shovel: {
     id: 'shovel',
-    name: 'SHOVEL KING',
+    name: 'SHOVELIST',
     tagline: 'PSYCHEDELIC HIPPIE',
     color: '#c46bff',
     sheet: 'shovel',
@@ -192,7 +213,12 @@ export const HEROES: Record<HeroId, HeroDef> = {
       radial: true,
       stun: 120,
     },
-    specialName: 'SHOVEL RAVE',
+    specialName: 'PSYCHEDELIC RAVE',
     specialFx: 'music',
+    dash: { id: 'dashkick', frames: [f('b3', 4), f('b4', 16)], active: [4, 15], reach: 44, damage: 10, knockback: 3, knockdown: true, lunge: 2.7 },
+    runSpeed: 2.6,
+    specialCooldown: 420,
+    dazeBonus: 1.6,
+    trait: 'GROOVE BONUS',
   },
 }

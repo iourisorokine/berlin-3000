@@ -164,7 +164,7 @@ class Audio {
     this.burst(400, 0.5, 0.6, 0.5, 'lowpass')
     this.thump(80, 200, 0.4, 0.4)
   }
-  /** SHOVEL RAVE: a quick rising arpeggio over the club kick */
+  /** PSYCHEDELIC RAVE: a quick rising arpeggio over the club kick */
   music() {
     const ctx = this.ctx
     if (!ctx || !this.master) return
@@ -181,6 +181,25 @@ class Audio {
       o.start(s)
       o.stop(s + 0.14)
     })
+  }
+  /** vape exhale */
+  hiss() {
+    this.burst(5000, 0.6, 0.25, 0.6, 'highpass')
+  }
+  /** fan gust */
+  whoosh() {
+    this.burst(700, 0.8, 0.45, 0.35)
+    this.burst(1400, 1.2, 0.25, 0.25)
+  }
+  /** camera shutter / door clicker */
+  click() {
+    this.burst(3000, 3, 0.4, 0.03)
+    window.setTimeout(() => this.burst(2200, 3, 0.3, 0.03), 60)
+  }
+  /** bubble-gum pop */
+  pop() {
+    this.thump(900, 200, 0.4, 0.06)
+    this.burst(2000, 2, 0.2, 0.04)
   }
   flash() {
     this.burst(4000, 0.8, 0.35, 0.08, 'highpass')

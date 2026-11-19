@@ -56,7 +56,8 @@ export const ENEMY_TYPES = {
     hp: 40,
     speed: 0.95,
     power: 1,
-    moves: [raverAttack('chop', 14, 34, 7)],
+    // karate chop, then exhales a vape cloud: standing in it makes you cough (slower)
+    moves: [raverAttack('chop', 14, 34, 7, { fx: 'vape' })],
     score: 100,
   },
   harness: {
@@ -66,7 +67,8 @@ export const ENEMY_TYPES = {
     hp: 70,
     speed: 0.75,
     power: 1,
-    moves: [raverAttack('haymaker', 22, 38, 12, { knockdown: true, knockback: 2.8, heavy: true })],
+    // flexes during the wind-up (no flinching), then a ground-shaking haymaker
+    moves: [raverAttack('haymaker', 22, 38, 12, { knockdown: true, knockback: 2.8, heavy: true, armor: true, say: 'FLEX!', fx: 'thump' })],
     score: 180,
   },
   queen: {
@@ -76,7 +78,8 @@ export const ENEMY_TYPES = {
     hp: 38,
     speed: 1.1,
     power: 1,
-    moves: [raverAttack('fanslap', 15, 52, 7)],
+    // the fan slap comes with a gust of wind that blows you far back
+    moves: [raverAttack('fanslap', 15, 52, 7, { knockback: 3.8, fx: 'gust' })],
     score: 140,
   },
   mullet: {
@@ -87,7 +90,7 @@ export const ENEMY_TYPES = {
     speed: 1.0,
     power: 1,
     // holds the camera out and fires the flash: long reach, little damage
-    moves: [raverAttack('flash', 18, 46, 6, { fx: 'flash', knockback: 1 })],
+    moves: [raverAttack('flash', 18, 46, 6, { fx: 'flash', knockback: 1, say: 'SMILE!' })],
     score: 130,
   },
   punkgirl: {
@@ -98,7 +101,8 @@ export const ENEMY_TYPES = {
     speed: 1.25,
     power: 1,
     // fast high kick with the boot
-    moves: [raverAttack('kick', 11, 40, 8, { knockback: 2 })],
+    // kick, then pops her bubble gum in your face
+    moves: [raverAttack('kick', 11, 40, 8, { knockback: 2, fx: 'gum', say: 'OI!' })],
     score: 150,
   },
   tourist: {
@@ -109,7 +113,11 @@ export const ENEMY_TYPES = {
     speed: 0.7,
     power: 1,
     // pokes with the extended selfie stick: the longest reach of all
-    moves: [raverAttack('poke', 16, 58, 6, { knockback: 1.4 })],
+    moves: [
+      raverAttack('poke', 16, 58, 6, { knockback: 1.4, fx: 'click' }),
+      // when you are on the ground he takes a selfie with you
+      { id: 'selfie', frames: [f('atk1', 40)], active: [20, 21], reach: 0, damage: 0, knockback: 0, knockdown: false, harmless: true, fx: 'selfie', say: 'SAY CHEESE!' },
+    ],
     score: 120,
   },
   bouncer: {
@@ -121,7 +129,7 @@ export const ENEMY_TYPES = {
     power: 1,
     moves: [
       // two-handed shove that sends you flying
-      raverAttack('shove', 16, 44, 12, { knockdown: true, knockback: 4, heavy: true }),
+      raverAttack('shove', 16, 44, 12, { knockdown: true, knockback: 4, heavy: true, say: 'RAUS!', fx: 'click' }),
       // grabs you by the collar and throws you over his shoulder (negative push = behind him)
       {
         id: 'throw',
@@ -132,6 +140,7 @@ export const ENEMY_TYPES = {
         knockback: -3.6,
         knockdown: true,
         heavy: true,
+        say: 'NEXT!',
       },
       // "NOT TODAY": points, shakes his head, stomps: a shockwave around him
       {
@@ -145,6 +154,7 @@ export const ENEMY_TYPES = {
         heavy: true,
         radial: true,
         fx: 'stomp',
+        say: 'NEIN!',
       },
     ],
     score: 2000,
@@ -244,6 +254,14 @@ export function updateEnemy(e: Enemy, target: Fighter) {
   // attack when lined up
   const distX = Math.abs(target.x - e.x)
   const distY = Math.abs(target.y - e.y)
+  // the selfie tourist poses with you while you lie on the ground
+  const selfie = e.moves.find((m) => m.id === 'selfie')
+  if (selfie && targetDown && e.cooldown <= 0 && distX < 70 && Math.random() < 0.05) {
+    e.facing = target.x > e.x ? 1 : -1
+    startMove(e, selfie)
+    e.cooldown = 90
+    return
+  }
   if (!e.attacker || targetDown || e.cooldown > 0 || distY > (e.isBoss ? 10 : 5)) return
   // the boss's stomp works from further away: he uses it when you keep your distance
   const stomp = e.moves.find((m) => m.id === 'e_stomp')
@@ -253,7 +271,7 @@ export function updateEnemy(e: Enemy, target: Fighter) {
     return
   }
   if (distX < 38) {
-    const close = e.moves.filter((m) => m.id !== 'e_stomp')
+    const close = e.moves.filter((m) => m.id !== 'e_stomp' && !m.harmless)
     startMove(e, close[Math.floor(Math.random() * close.length)])
     e.cooldown = e.isBoss ? rand(40, 80) : rand(60, 120)
   }

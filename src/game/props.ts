@@ -1,5 +1,6 @@
 import type { PickupKind } from './effects'
 import { drawFrame, sheet } from './sprites'
+import { OPEN } from './stage'
 
 /** Street objects in the walkable band that break when hit, and drop things. */
 export type BreakableKind = 'bin' | 'boxes' | 'crate' | 'cone'
@@ -19,14 +20,15 @@ export interface Breakable {
 
 /** where they stand in level 1 (x, feet y) */
 const LAYOUT: [BreakableKind, number, number][] = [
-  ['bin', 250, 172],
-  ['boxes', 560, 192],
-  ['crate', 980, 166],
-  ['bin', 1180, 198],
-  ['cone', 1420, 176],
-  ['boxes', 1640, 200],
-  ['bin', 1990, 168],
-  ['crate', 2200, 194],
+  ['cone', 200, 186],
+  ['bin', 300, 168],
+  ['bin', 250 + OPEN, 172],
+  ['boxes', 560 + OPEN, 192],
+  ['crate', 980 + OPEN, 166],
+  ['bin', 1180 + OPEN, 198],
+  ['cone', 1420 + OPEN, 176],
+  ['boxes', 1640 + OPEN, 200],
+  ['bin', 1990 + OPEN, 168],
 ]
 
 /** what falls out when it breaks */
