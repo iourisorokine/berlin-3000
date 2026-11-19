@@ -191,7 +191,17 @@
         "5": "portrait_angry",
         "6": "portrait_hurt"
       }
-    }
+    },
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ]
   },
   "monk": {
     "targetHeight": 74,
@@ -235,6 +245,16 @@
           "getup"
         ]
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "harness": {
@@ -279,6 +299,16 @@
           "getup"
         ]
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "queen": {
@@ -355,6 +385,16 @@
           "4": "portrait_hurt"
         }
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "mullet": {
@@ -399,6 +439,16 @@
           "getup"
         ]
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "extras": {
@@ -686,6 +736,16 @@
           "getup"
         ]
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "tourist": {
@@ -730,6 +790,16 @@
           "getup"
         ]
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "bouncer": {
@@ -803,7 +873,17 @@
         "5": "portrait_angry",
         "6": "portrait_hurt"
       }
-    }
+    },
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ]
   },
   "shovel": {
     "targetHeight": 68,
@@ -919,6 +999,16 @@
           "4": "portrait_hurt"
         }
       }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
     ]
   },
   "lolli": {
@@ -1008,7 +1098,17 @@
         "5": "portrait_angry",
         "6": "portrait_hurt"
       }
-    }
+    },
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ]
   },
   "oma": {
     "targetHeight": 62,
@@ -1105,7 +1205,17 @@
         "5": "portrait_angry",
         "6": "portrait_hurt"
       }
-    }
+    },
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ]
   },
   "kunst": {
     "targetHeight": 70,
@@ -1200,6 +1310,16 @@
         "5": "portrait_angry",
         "6": "portrait_hurt"
       }
-    }
+    },
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ]
   }
 }

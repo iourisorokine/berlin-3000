@@ -14,6 +14,7 @@ What it does, per cell of each sheet:
   4. snaps it to a real pixel grid and one shared palette per character,
   5. records the feet anchor (bottom of the feet, middle of the legs);
      a sheet's "anchorX" can override it as a fraction of the frame width.
+Per-character option "bodyAnchor": frames (idle, walk) pinned at the hips instead of the feet.
 Per-sheet options: "scale" (fixed art px per image px), "standFactor" (height of the "stand"
 poses relative to a normal standing pose, e.g. 0.92 for a leaning hurt pose), "keepAll" (keep every blob in a cell,
 for effects made of scattered pieces), "cellAnchor": "center" | "baseline" (anchor taken from
@@ -131,6 +132,14 @@ def quantize_all(images, colors: int):
     return out
 
 
+def waist_x(im: Image.Image) -> float:
+    """x of the hips: median column of the figure between 40 % and 55 % of its height."""
+    a = np.array(im)[..., 3] > 0
+    h = a.shape[0]
+    ys, xs = np.nonzero(a[int(h * 0.40):int(h * 0.55)])
+    return float(np.median(xs))
+
+
 def build(name: str, cfg: dict):
     # sheets whose raw image is not there yet are skipped (heroes waiting for their art)
     cfg = dict(cfg)
@@ -215,6 +224,16 @@ def build(name: str, cfg: dict):
         if nm in fixed_anchor:
             ax, ay = fixed_anchor[nm]
         meta[nm] = {"x": px, "y": py, "w": im.width, "h": im.height, "ax": ax, "ay": ay}
+    # bodyAnchor: in idle and walk frames the feet spread unevenly, so pinning the feet makes the
+    # body lurch back and forth on every step. Those frames are pinned at the hips instead, keeping
+    # the first frame's hips-to-feet offset so standing still looks the same as before.
+    body = [n for n in cfg.get("bodyAnchor", []) if n in meta]
+    if body:
+        img_of = dict(zip(names, images))
+        ref = body[0]
+        d = waist_x(img_of[ref]) - meta[ref]["ax"]
+        for n in body:
+            meta[n]["ax"] = int(round(waist_x(img_of[n]) - d))
     OUT.mkdir(parents=True, exist_ok=True)
     atlas.save(OUT / f"{name}.png", optimize=True)
     (OUT / f"{name}.json").write_text(json.dumps({"image": f"{name}.png", "frames": meta}, indent=1))
