@@ -58,7 +58,7 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | file | what |
 | --- | --- |
 | `src/game/constants.ts` | screen size, physics, combat feel (hit-stop, reach), enemy limits |
-| `src/game/heroes.ts` | CRAZY NESS (id jule), SHOVELIST, RAVE QUEEN (enemy-sheet version and the `ravequeen` redesign), LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
+| `src/game/heroes.ts` | CRAZY NESS (id jule), SHOVELIST, DARKINA (ids `ravequeen`, and `queen` for the old enemy-sheet version), LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
 | `src/game/enemy.ts` | enemy types and AI |
 | `src/game/Game.ts` | waves, camera, hit resolution, scenes |
 | `src/game/stage.ts` | the code-drawn placeholder level (sky, Fernsehturm, power plant, queue) |

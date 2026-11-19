@@ -250,7 +250,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   // (design, C, D) exist she borrows attack frames for the jump and victory.
   queen: {
     id: 'queen',
-    name: 'RAVE QUEEN',
+    name: 'DARKINA',
     tagline: 'GOTH WITH A FAN',
     color: '#e6e6ff',
     sheet: 'queen',
@@ -301,8 +301,8 @@ export const HEROES: Record<HeroId, HeroDef> = {
   // imported she replaces the version above, which borrows her enemy frames.
   ravequeen: {
     id: 'ravequeen',
-    name: 'RAVE QUEEN',
-    tagline: 'GOTH WITH A FAN',
+    name: 'DARKINA',
+    tagline: 'GOTH QUEEN WITH A FAN',
     color: '#b98cff',
     sheet: 'ravequeen',
     twin: 'queen',
