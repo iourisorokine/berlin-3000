@@ -35,7 +35,8 @@ export function drawHud(ctx: CanvasRenderingContext2D, p: Player, foe: Enemy | n
         : 'portrait_neutral'
   drawPortrait(ctx, sheet(p.hero.sheet), face, 4, 5)
   drawText(ctx, p.hero.name, 42, 5, { color: p.hero.color, outline: OUT })
-  drawText(ctx, String(p.score).padStart(6, '0'), 146, 5, { color: '#ffffff', outline: OUT, align: 'right' })
+  // long names (BAD BAD SCHWEIN) push the score to the right
+  drawText(ctx, String(p.score).padStart(6, '0'), Math.max(146, 42 + p.hero.name.length * 6 + 40), 5, { color: '#ffffff', outline: OUT, align: 'right' })
   const k = p.hp / p.maxHp
   bar(ctx, 42, 15, 104, 6, k, k > 0.3 ? '#ffd23a' : '#ff4a3a', ghostHp)
   const ready = p.specialCd <= 0

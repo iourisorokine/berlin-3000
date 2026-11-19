@@ -58,7 +58,7 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | file | what |
 | --- | --- |
 | `src/game/constants.ts` | screen size, physics, combat feel (hit-stop, reach), enemy limits |
-| `src/game/heroes.ts` | JULE, SHOVELIST, RAVE QUEEN, LOLLI, BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
+| `src/game/heroes.ts` | JULE, SHOVELIST, RAVE QUEEN, LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
 | `src/game/enemy.ts` | enemy types and AI |
 | `src/game/Game.ts` | waves, camera, hit resolution, scenes |
 | `src/game/stage.ts` | the code-drawn placeholder level (sky, Fernsehturm, power plant, queue) |

@@ -337,7 +337,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   // half man, half wild boar, dressed like any Neukölln hipster
   schwein: {
     id: 'schwein',
-    name: 'BAD SCHWEIN',
+    name: 'BAD BAD SCHWEIN',
     tagline: 'WILD BOAR HIPSTER',
     color: '#c98a5a',
     sheet: 'schwein',
@@ -357,7 +357,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
     special: {
       id: 'schweineshuffle',
       frames: [f('sp2', 10), f('sp1', 6), f('sp3', 6), f('sp1', 6), f('sp3', 6), f('sp1', 6), f('sp3', 6), f('sp4', 10)],
-      active: [10, 46],
+      active: [10, 40],
       reach: 72,
       depth: 30,
       damage: 5,

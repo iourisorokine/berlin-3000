@@ -365,6 +365,13 @@ export class Game {
     if (this.comboT > 0 && --this.comboT === 0) this.comboHits = 0
     if (p.state !== 'dead') updatePlayer(p, this.input)
     if (p.running && p.t % 9 === 0) this.fx.dust(p.x - p.facing * 8, p.y)
+    // BAD BAD SCHWEIN's dance: a deep "bum" and a puff of dust on every step
+    if (p.state === 'special' && p.hero.specialFx === 'shuffle' && p.move?.rehit && isActive(p) && (p.t - p.move.active[0]) % p.move.rehit === 0) {
+      audio.bum()
+      this.fx.dust(p.x - 14, p.y)
+      this.fx.dust(p.x + 14, p.y)
+      this.shake = Math.max(this.shake, 3)
+    }
     // throwing moves launch their projectile on the first active frame
     if (p.move?.projectile && (p.state === 'attack' || p.state === 'special') && p.t === p.move.active[0]) {
       const pr = p.move.projectile
@@ -388,7 +395,7 @@ export class Game {
       } else if (p.hero.specialFx === 'music') {
         this.fx.music(p.x + p.facing * 14, p.y, 52)
         this.psyT = 80
-        audio.music()
+        audio.sitar()
       } else if (p.hero.specialFx === 'gust') {
         for (let i = 0; i < 3; i++) this.fx.gust(p.x + p.facing * (20 + i * 30), p.y + (i - 1) * 6, p.facing)
         this.shake = 6
@@ -400,9 +407,7 @@ export class Game {
         this.fx.gust(p.x + 10, p.y, 1)
         audio.whoosh()
       } else if (p.hero.specialFx === 'shuffle') {
-        this.fx.music(p.x, p.y, 36)
-        this.fx.popup(p.x, p.y - 110, 'OINK OINK!', '#ffb3c8')
-        audio.music()
+        // just a dance: the steps (bum, bum, bum) are played below, on each hit of the move
       } else if (p.hero.specialFx === 'gallery') {
         this.galleryT = 110
         this.fx.popup(p.x, p.y - 124, 'VOILA!', '#f2c14e')

@@ -164,7 +164,90 @@ class Audio {
     this.burst(400, 0.5, 0.6, 0.5, 'lowpass')
     this.thump(80, 200, 0.4, 0.4)
   }
-  /** PSYCHEDELIC RAVE: a quick rising arpeggio over the club kick */
+  /** PSYCHEDELIC RAVE: a sitar phrase over a tanpura drone, with a few tabla strokes */
+  sitar() {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    const t = ctx.currentTime
+    const out = ctx.createGain()
+    out.gain.value = 0.9
+    out.connect(this.master)
+    // tanpura drone: Sa and Pa, softly filtered, swelling in and out
+    const drone = ctx.createGain()
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 900
+    drone.gain.setValueAtTime(0.0001, t)
+    drone.gain.exponentialRampToValueAtTime(0.05, t + 0.15)
+    drone.gain.setValueAtTime(0.05, t + 1.3)
+    drone.gain.exponentialRampToValueAtTime(0.0001, t + 1.8)
+    lp.connect(drone).connect(out)
+    for (const f of [130.81, 196, 261.63]) {
+      const o = ctx.createOscillator()
+      o.type = 'sawtooth'
+      o.frequency.value = f
+      o.detune.value = (Math.random() - 0.5) * 8
+      o.connect(lp)
+      o.start(t)
+      o.stop(t + 1.85)
+    }
+    // the sitar's buzzing bridge: a soft clipper after a resonant band-pass
+    const buzz = ctx.createWaveShaper()
+    const curve = new Float32Array(256)
+    for (let i = 0; i < 256; i++) {
+      const x = (i / 255) * 2 - 1
+      curve[i] = Math.tanh(x * 4)
+    }
+    buzz.curve = curve
+    const sitarOut = ctx.createGain()
+    sitarOut.gain.value = 0.5
+    buzz.connect(sitarOut).connect(out)
+    // a phrase in raga Bhairav (Sa re Ga ma Pa dha Ni), some notes sliding up into place
+    const phrase: [number, number, boolean][] = [
+      [0, 0.0, false], [1, 0.12, true], [4, 0.24, false], [5, 0.36, true], [7, 0.5, false],
+      [8, 0.62, true], [7, 0.74, false], [5, 0.86, false], [4, 1.0, true], [1, 1.12, false], [0, 1.26, true],
+    ]
+    for (const [semi, at, slide] of phrase) {
+      const f = 261.63 * Math.pow(2, semi / 12)
+      const s = t + at
+      const o = ctx.createOscillator()
+      o.type = 'sawtooth'
+      o.frequency.setValueAtTime(slide ? f * Math.pow(2, -1.5 / 12) : f, s)
+      if (slide) o.frequency.exponentialRampToValueAtTime(f, s + 0.06)
+      const bp = ctx.createBiquadFilter()
+      bp.type = 'bandpass'
+      bp.frequency.value = f * 3
+      bp.Q.value = 5
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, s)
+      g.gain.exponentialRampToValueAtTime(0.35, s + 0.004)
+      g.gain.exponentialRampToValueAtTime(0.001, s + 0.4)
+      o.connect(bp).connect(g).connect(buzz)
+      o.start(s)
+      o.stop(s + 0.42)
+    }
+    // tabla: the bass drum's pitch bends up, a dry tap on top
+    for (const at of [0, 0.5, 0.74, 1.0]) {
+      const s = t + at
+      const o = ctx.createOscillator()
+      const g = ctx.createGain()
+      o.type = 'sine'
+      o.frequency.setValueAtTime(85, s)
+      o.frequency.exponentialRampToValueAtTime(140, s + 0.12)
+      g.gain.setValueAtTime(0.35, s)
+      g.gain.exponentialRampToValueAtTime(0.001, s + 0.25)
+      o.connect(g).connect(out)
+      o.start(s)
+      o.stop(s + 0.27)
+    }
+    window.setTimeout(() => out.disconnect(), 2000)
+  }
+  /** BAD BAD SCHWEIN's dance step: a deep, round "bum" */
+  bum() {
+    this.thump(78, 40, 1, 0.32)
+    this.burst(160, 0.6, 0.3, 0.16, 'lowpass')
+  }
+  /** a quick rising arpeggio */
   music() {
     const ctx = this.ctx
     if (!ctx || !this.master) return
