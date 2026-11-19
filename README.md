@@ -54,7 +54,7 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | file | what |
 | --- | --- |
 | `src/game/constants.ts` | screen size, physics, combat feel (hit-stop, reach), enemy limits |
-| `src/game/heroes.ts` | JULE, SHOVELIST, RAVE QUEEN, LOLLI, OMA HILDE, VINYL VIKTOR (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
+| `src/game/heroes.ts` | JULE, SHOVELIST, RAVE QUEEN, LOLLI, OMA HILDE, HERR KUNST (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
 | `src/game/enemy.ts` | enemy types and AI |
 | `src/game/Game.ts` | waves, camera, hit resolution, scenes |
 | `src/game/stage.ts` | the code-drawn placeholder level (sky, Fernsehturm, power plant, queue) |
@@ -71,6 +71,6 @@ ends in a burst of rave confetti. Code: `Effects.hitGag` and `Effects.confetti` 
 
 - 6 of the 11 enemies have sprites (TECHNO MONK, HARNESS BOY, RAVE QUEEN, MULLET, PUNK GIRL,
   SELFIE TOURIST). Still missing: AFTERHOUR GHOST, DJ WANNABE, PUNK, HIPSTER, STAG BRO.
-- LOLLI, OMA HILDE and VINYL VIKTOR are coded but wait for their art (`hero_<id>_design.png`, `hero_<id>_A.png` … `_D.png` in `art/raw`). Run `python3 tools/import_sprites.py lolli oma viktor` and they appear on the select screen.
+- OMA HILDE and HERR KUNST are coded but wait for their art (`hero_<id>_design.png`, `hero_<id>_A.png` … `_D.png` in `raw-assets`). Run `python3 tools/import_sprites.py oma kunst` and they appear on the select screen.
 - RAVE QUEEN is built from her enemy sheets.
 - Throwable items (beer bottle, vinyl, brick, extinguisher) are imported but not used yet.

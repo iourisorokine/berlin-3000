@@ -74,6 +74,8 @@ export function sheet(v: SheetKey): Sheet {
 
 export interface DrawOpts {
   flash?: boolean
+  /** a lighter white glaze of this strength (statues) */
+  glaze?: number
   /** rotation in radians around the feet (positive = falls backwards) */
   tilt?: number
   /** whole-pixel zoom (effects only) */
@@ -98,6 +100,10 @@ export function drawFrame(
   if (opts.tilt) ctx.rotate(-opts.tilt)
   if (opts.alpha !== undefined) ctx.globalAlpha = opts.alpha
   ctx.drawImage(s.img, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)
+  if (opts.glaze && !opts.flash) {
+    ctx.globalAlpha = (opts.alpha ?? 1) * opts.glaze
+    ctx.drawImage(s.white, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)
+  }
   if (opts.flash) {
     // hit flash: a white glaze over the sprite rather than a solid white cut-out
     ctx.globalAlpha = (opts.alpha ?? 1) * 0.65

@@ -949,9 +949,6 @@
         "file": "hero_lolli_B.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "c1a"
-        ],
         "frames": [
           "c1a",
           "c1b",
@@ -961,15 +958,13 @@
           "f2",
           "f3",
           "f4"
-        ]
+        ],
+        "standHeightPx": 393
       },
       {
         "file": "hero_lolli_C.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "hurt"
-        ],
         "frames": [
           "jcrouch",
           "jair",
@@ -984,15 +979,12 @@
           "jair": 0.5,
           "jkick": 0.45
         },
-        "standFactor": 0.92
+        "standHeightPx": 393
       },
       {
         "file": "hero_lolli_D.png",
         "cols": 4,
         "rows": 2,
-        "stand": [
-          "win2"
-        ],
         "frames": [
           "sp1",
           "sp2",
@@ -1003,7 +995,7 @@
           null,
           null
         ],
-        "standFactor": 1.05
+        "standHeightPx": 393
       }
     ],
     "portraits": {
@@ -1115,13 +1107,13 @@
       }
     }
   },
-  "viktor": {
+  "kunst": {
     "targetHeight": 70,
     "colors": 48,
-    "scaleFrom": "hero_viktor_A.png",
+    "scaleFrom": "hero_kunst_A.png",
     "sheets": [
       {
-        "file": "hero_viktor_A.png",
+        "file": "hero_kunst_A.png",
         "cols": 4,
         "rows": 2,
         "stand": [
@@ -1140,7 +1132,7 @@
         ]
       },
       {
-        "file": "hero_viktor_B.png",
+        "file": "hero_kunst_B.png",
         "cols": 4,
         "rows": 2,
         "stand": [
@@ -1158,7 +1150,7 @@
         ]
       },
       {
-        "file": "hero_viktor_C.png",
+        "file": "hero_kunst_C.png",
         "cols": 4,
         "rows": 2,
         "stand": [
@@ -1177,11 +1169,10 @@
         "anchorX": {
           "jair": 0.5,
           "jkick": 0.45
-        },
-        "standFactor": 0.92
+        }
       },
       {
-        "file": "hero_viktor_D.png",
+        "file": "hero_kunst_D.png",
         "cols": 4,
         "rows": 2,
         "stand": [
@@ -1196,12 +1187,11 @@
           "win2",
           null,
           null
-        ],
-        "standFactor": 1.05
+        ]
       }
     ],
     "portraits": {
-      "file": "hero_viktor_design.png",
+      "file": "hero_kunst_design.png",
       "cols": 4,
       "rows": 2,
       "height": 40,

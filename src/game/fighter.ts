@@ -48,6 +48,8 @@ export interface Move {
   spin?: boolean
   /** throws something instead of hitting up close (VINYL VIKTOR's records) */
   projectile?: { sprite: string; speed: number; damage: number; knockdown: boolean }
+  /** the stun turns targets into silver statues (HERR KUNST's art installation) */
+  statue?: boolean
   /** forward speed during the active frames */
   lunge?: number
   /** the attacker's trick at the first active frame (effect + sound) */
@@ -114,6 +116,8 @@ export interface Fighter {
   flash: number
   /** frames left dazed (from a stun move) */
   stunT: number
+  /** frozen as a statue while stunned */
+  statue: boolean
   /** running (players): faster walk cycle */
   running?: boolean
   /** walking speed multiplier */
@@ -153,6 +157,7 @@ export function makeFighter(p: Partial<Fighter> & { name: string; variant: Sheet
     hitstop: 0,
     flash: 0,
     stunT: 0,
+    statue: false,
     speed: 1,
     power: 1,
     cooldown: 60,
@@ -217,6 +222,7 @@ export function takeHit(t: Fighter, a: Fighter, m: Move): boolean {
   const down = m.knockdown || t.hp <= 0
   if (down) {
     t.stunT = 0
+    t.statue = false
     t.hitList.clear()
     setState(t, 'fall')
     t.vz = 3.4
@@ -332,12 +338,14 @@ export function drawFighter(ctx: CanvasRenderingContext2D, f: Fighter, camX: num
   if (f.invuln > 3 && f.isPlayer && Math.floor(f.invuln / 3) % 2 === 0) return
   const p = pose(f)
   // dazed: dances on the spot, turning left and right to the beat
-  let facing = f.stunT > 0 && Math.floor(f.stunT / 12) % 2 ? (-f.facing as 1 | -1) : f.facing
+  const stone = f.stunT > 0 && f.statue
+  let facing = !stone && f.stunT > 0 && Math.floor(f.stunT / 12) % 2 ? (-f.facing as 1 | -1) : f.facing
   // tornado specials: spin on the spot
   if (f.state === 'special' && f.move?.spin && isActive(f) && Math.floor(f.t / 4) % 2) facing = -facing as 1 | -1
   const lying = (f.state === 'down' || f.state === 'dead') && !f.anim.down
   drawFrame(ctx, sheet(f.variant), p.name, sx, f.y - f.z + p.bob + (lying ? -4 : 0), facing, {
     flash: f.flash > 3,
+    glaze: stone ? 0.55 : undefined,
     tilt: p.tilt,
   })
 }

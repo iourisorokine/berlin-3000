@@ -151,6 +151,8 @@ export class Game {
   private heroId: HeroId = 'jule'
   /** frames left of the psychedelic colour wash (PSYCHEDELIC RAVE) */
   private psyT = 0
+  /** HERR KUNST's spotlight */
+  private galleryT = 0
   /** hits landed in a row (resets after a pause) and frames left before it resets */
   private comboHits = 0
   private comboT = 0
@@ -213,6 +215,7 @@ export class Game {
     this.comboHits = 0
     this.comboT = 0
     this.projectiles = []
+    this.galleryT = 0
   }
 
   // ------------------------------------------------------------ update
@@ -264,6 +267,7 @@ export class Game {
   private updatePlay() {
     if (this.shake > 0) this.shake--
     if (this.psyT > 0) this.psyT--
+    if (this.galleryT > 0) this.galleryT--
     if (this.freeze > 0) {
       this.freeze--
       return
@@ -319,12 +323,10 @@ export class Game {
         this.fx.gust(p.x - 10, p.y, -1)
         this.fx.gust(p.x + 10, p.y, 1)
         audio.whoosh()
-      } else if (p.hero.specialFx === 'drop') {
-        this.fx.shockwave(p.x, p.y)
-        this.fx.music(p.x, p.y, 40)
-        this.shake = 18
-        audio.thud()
-        audio.music()
+      } else if (p.hero.specialFx === 'gallery') {
+        this.galleryT = 110
+        this.fx.popup(p.x, p.y - 96, 'VOILA!', '#f2c14e')
+        audio.flash()
       } else this.fx.ramDust(p.x - p.facing * 14, p.y, p.facing)
       if (p.hero.sugarRush) {
         p.boostT = p.hero.sugarRush
@@ -484,7 +486,11 @@ export class Game {
     if (a.isPlayer && a.state === 'special' && (a as Player).hero.specialFx === 'ram') this.fx.ramHit(t.x - a.facing * 4, t.y, a.facing)
     this.fx.spark(t.x - t.facing * 6, t.y, t.z + 44, heavy)
     this.fx.hitGag(t.x, t.y, t.z + 46, a.facing, heavy)
-    if (m.stun && !down) t.stunT = Math.round(m.stun * ((t as Enemy).isBoss ? 0.35 : 1))
+    if (m.stun && !down) {
+      t.stunT = Math.round(m.stun * ((t as Enemy).isBoss ? 0.35 : 1))
+      t.statue = !!m.statue
+      if (m.statue) this.fx.popup(t.x, t.y - 84 - (t.id % 3) * 9, `${2 + Math.floor(Math.random() * 98)}.000 €`, '#f2c14e')
+    }
     if (!t.isPlayer && ['monk', 'punkgirl'].includes((t as Enemy).kind)) this.fx.gum(t.x + t.facing * 8, t.y, t.z + 58, t.facing)
     if (t.hp <= 0) {
       this.fx.confetti(t.x, t.y, t.z + 40)
@@ -706,6 +712,7 @@ export class Game {
     for (const d of front) d.draw()
     this.fx.drawAir(ctx, cam)
     if (this.psyT > 0) this.drawPsychedelic(ctx)
+    if (this.galleryT > 0) this.drawGallery(ctx)
     if (this.fx.flashT > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.fx.flashT * 0.06})`
       ctx.fillRect(0, 0, VIEW_W, VIEW_H)
@@ -762,6 +769,31 @@ export class Game {
   }
 
   /** PSYCHEDELIC RAVE: shifting rainbow bands washed over the scene */
+  /** the gallery spotlight: the street goes dark, a warm cone of light falls on the artist */
+  private drawGallery(ctx: CanvasRenderingContext2D) {
+    const k = Math.min(1, this.galleryT / 15, (110 - this.galleryT) / 6)
+    const x = Math.round(this.player.x - this.camX)
+    const y = Math.round(this.player.y)
+    ctx.save()
+    ctx.fillStyle = `rgba(6,4,14,${0.45 * k})`
+    ctx.beginPath()
+    ctx.rect(0, 0, VIEW_W, VIEW_H)
+    ctx.moveTo(x - 10, 0)
+    ctx.lineTo(x - 46, y + 6)
+    ctx.lineTo(x + 46, y + 6)
+    ctx.lineTo(x + 10, 0)
+    ctx.closePath()
+    ctx.fill('evenodd')
+    ctx.fillStyle = `rgba(255,236,190,${0.16 * k})`
+    ctx.beginPath()
+    ctx.moveTo(x - 10, 0)
+    ctx.lineTo(x - 46, y + 6)
+    ctx.lineTo(x + 46, y + 6)
+    ctx.lineTo(x + 10, 0)
+    ctx.fill()
+    ctx.restore()
+  }
+
   private drawPsychedelic(ctx: CanvasRenderingContext2D) {
     const k = Math.min(1, this.psyT / 20)
     ctx.save()

@@ -1,14 +1,14 @@
 import type { AnimSet, Move, MoveFrame } from './fighter'
 import type { SheetKey } from './sprites'
 
-export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'oma' | 'viktor'
+export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'oma' | 'kunst'
 
 /**
  * Order on the fighter-select screen. A hero only shows up once its sprite atlas exists
- * (LOLLI, OMA HILDE and VINYL VIKTOR appear as soon as their sheets are imported).
+ * (OMA HILDE and HERR KUNST appear as soon as their sheets are imported).
  * KALLE is kept in the code but off the list.
  */
-export const HERO_ORDER: HeroId[] = ['jule', 'shovel', 'queen', 'lolli', 'oma', 'viktor']
+export const HERO_ORDER: HeroId[] = ['jule', 'shovel', 'queen', 'lolli', 'oma', 'kunst']
 
 /**
  * Everything that makes a playable hero different. Frame names come from
@@ -45,7 +45,7 @@ export interface HeroDef {
   special: Move
   specialName: string
   /** extra visual for the special */
-  specialFx: 'ram' | 'shockwave' | 'music' | 'gust' | 'tornado' | 'drop'
+  specialFx: 'ram' | 'shockwave' | 'music' | 'gust' | 'tornado' | 'gallery'
 }
 
 const f = (name: string, dur: number): MoveFrame => ({ name, dur })
@@ -305,12 +305,13 @@ export const HEROES: Record<HeroId, HeroDef> = {
     anim: STANDARD_ANIM,
     combo: [
       { id: 'jab', frames: [f('c1a', 4), f('c1b', 8)], active: [4, 7], reach: 34, damage: 6, knockback: 1, knockdown: false },
-      { id: 'braidwhip', frames: [f('c2a', 5), f('c2b', 10)], active: [5, 10], reach: 48, damage: 8, knockback: 1.6, knockdown: false },
+      { id: 'frontkick', frames: [f('c2a', 5), f('c2b', 10)], active: [5, 10], reach: 48, damage: 8, knockback: 1.6, knockdown: false },
       { id: 'spinkick', frames: [f('f1', 7), f('f2', 9), f('f3', 8), f('f4', 6)], active: [7, 16], reach: 46, damage: 14, knockback: 3.4, knockdown: true, heavy: true },
     ],
     air: { id: 'flyknee', frames: [f('jkick', 999)], active: [0, 999], reach: 30, damage: 11, knockback: 2.4, knockdown: true },
-    dash: { id: 'dashwhip', frames: [f('c2a', 4), f('c2b', 14)], active: [4, 14], reach: 48, damage: 10, knockback: 3, knockdown: true, lunge: 3 },
-    // spins like a helicopter: the braids hit everyone around three times; then a sugar rush
+    dash: { id: 'dashkick', frames: [f('c2a', 4), f('c2b', 14)], active: [4, 14], reach: 48, damage: 10, knockback: 3, knockdown: true, lunge: 3 },
+    // throws her fist up, drops low and spins like a helicopter: the braids hit everyone
+    // around three times; then a sugar rush
     special: {
       id: 'braidtornado',
       frames: [f('sp1', 10), f('sp2', 8), f('sp3', 30), f('sp4', 10)],
@@ -330,7 +331,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
     runSpeed: 2.9,
     specialCooldown: 330,
     sugarRush: 240,
-    trait: 'BRAID REACH - SUGAR RUSH',
+    trait: 'FAST KICKS - SUGAR RUSH',
   },
   oma: {
     id: 'oma',
@@ -371,51 +372,43 @@ export const HEROES: Record<HeroId, HeroDef> = {
     regen: 40,
     trait: 'TANKY - HEALS SLOWLY',
   },
-  viktor: {
-    id: 'viktor',
-    name: 'VINYL VIKTOR',
-    tagline: 'DJ WITH A RECORD BAG',
-    color: '#ffd23a',
-    sheet: 'viktor',
+  kunst: {
+    id: 'kunst',
+    name: 'HERR KUNST',
+    tagline: 'QUEER PERFORMANCE ARTIST',
+    color: '#f2c14e',
+    sheet: 'kunst',
     hp: 105,
-    walkX: 1.2,
+    walkX: 1.15,
     walkY: 0.75,
     anim: STANDARD_ANIM,
     combo: [
-      { id: 'jab', frames: [f('c1a', 5), f('c1b', 9)], active: [5, 9], reach: 34, damage: 7, knockback: 1.1, knockdown: false },
-      { id: 'bagswing', frames: [f('c2a', 6), f('c2b', 11)], active: [6, 11], reach: 42, damage: 9, knockback: 1.8, knockdown: false },
-      // the finisher throws a record that slices through everyone in its path
-      {
-        id: 'vinylthrow',
-        frames: [f('f1', 8), f('f2', 6), f('f3', 8), f('f4', 6)],
-        active: [10, 11],
-        reach: 0,
-        damage: 0,
-        knockback: 0,
-        knockdown: false,
-        projectile: { sprite: 'vinyl', speed: 4.6, damage: 11, knockdown: true },
-      },
+      { id: 'framepoke', frames: [f('c1a', 6), f('c1b', 9)], active: [6, 9], reach: 44, damage: 7, knockback: 1.2, knockdown: false },
+      { id: 'frameswing', frames: [f('c2a', 6), f('c2b', 11)], active: [6, 11], reach: 50, damage: 9, knockback: 1.8, knockdown: false },
+      // brings the empty gold frame down over the enemy's head
+      { id: 'frameslam', frames: [f('f1', 10), f('f2', 8), f('f3', 10), f('f4', 8)], active: [10, 18], reach: 46, damage: 15, knockback: 3.4, knockdown: true, heavy: true },
     ],
-    air: { id: 'flykick', frames: [f('jkick', 999)], active: [0, 999], reach: 30, damage: 10, knockback: 2.4, knockdown: true },
-    dash: { id: 'dashswing', frames: [f('c2a', 4), f('c2b', 14)], active: [4, 14], reach: 42, damage: 10, knockback: 3, knockdown: true, lunge: 2.6 },
-    // the bass drops: the whole street shakes and everyone on screen goes down
+    air: { id: 'framedrop', frames: [f('jkick', 999)], active: [0, 999], reach: 34, damage: 10, knockback: 2.4, knockdown: true },
+    dash: { id: 'dashframe', frames: [f('c2a', 4), f('c2b', 14)], active: [4, 14], reach: 50, damage: 10, knockback: 3, knockdown: true, lunge: 2.6 },
+    // a spotlight, a pose: everyone around becomes a silver statue with a price tag
     special: {
-      id: 'dropthebass',
-      frames: [f('sp1', 14), f('sp2', 10), f('sp3', 24), f('sp4', 10)],
-      active: [24, 29],
-      reach: 400,
-      depth: 80,
-      damage: 12,
-      knockback: 3,
-      knockdown: true,
-      heavy: true,
+      id: 'artinstallation',
+      frames: [f('sp1', 12), f('sp2', 10), f('sp3', 40), f('sp4', 10)],
+      active: [22, 27],
+      reach: 150,
+      depth: 60,
+      damage: 6,
+      knockback: 0,
+      knockdown: false,
       multi: true,
       radial: true,
+      stun: 200,
+      statue: true,
     },
-    specialName: 'DROP THE BASS',
-    specialFx: 'drop',
+    specialName: 'ART INSTALLATION',
+    specialFx: 'gallery',
     runSpeed: 2.5,
-    specialCooldown: 480,
-    trait: 'THROWS RECORDS',
+    specialCooldown: 420,
+    trait: 'TURNS ENEMIES TO STATUES',
   },
 }
