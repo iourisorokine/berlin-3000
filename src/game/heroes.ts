@@ -72,7 +72,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   jule: {
     id: 'jule',
     name: 'CRAZY NESS',
-    tagline: 'FAST TECHNO RAVER',
+    tagline: 'IN THA PLACE',
     color: '#c8ff3a',
     sheet: 'jule',
     hp: 100,
@@ -187,7 +187,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   shovel: {
     id: 'shovel',
     name: 'SHOVELIST',
-    tagline: 'PSYCHEDELIC HIPPIE',
+    tagline: 'DIGS INTO YOUR SOUL',
     color: '#c46bff',
     sheet: 'shovel',
     hp: 110,
@@ -250,8 +250,8 @@ export const HEROES: Record<HeroId, HeroDef> = {
   // (design, C, D) exist she borrows attack frames for the jump and victory.
   queen: {
     id: 'queen',
-    name: 'DARKINA',
-    tagline: 'GOTH WITH A FAN',
+    name: 'GOTHILDE',
+    tagline: 'ONLY FAN',
     color: '#e6e6ff',
     sheet: 'queen',
     twin: 'queen',
@@ -301,8 +301,8 @@ export const HEROES: Record<HeroId, HeroDef> = {
   // imported she replaces the version above, which borrows her enemy frames.
   ravequeen: {
     id: 'ravequeen',
-    name: 'DARKINA',
-    tagline: 'GOTH QUEEN WITH A FAN',
+    name: 'GOTHILDE',
+    tagline: 'ONLY FAN',
     color: '#b98cff',
     sheet: 'ravequeen',
     twin: 'queen',
@@ -338,7 +338,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   lolli: {
     id: 'lolli',
     name: 'LOLLI',
-    tagline: 'BRAIDED RAVE ATHLETE',
+    tagline: 'HOLLY MOLLY!',
     color: '#ff4fa3',
     sheet: 'lolli',
     hp: 100,
@@ -379,7 +379,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   schwein: {
     id: 'schwein',
     name: 'BAD BAD SCHWEIN',
-    tagline: 'WILD BOAR HIPSTER',
+    tagline: 'YOUR WURST NIGHTMARE',
     color: '#c98a5a',
     sheet: 'schwein',
     hp: 125,
@@ -418,7 +418,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
   kunst: {
     id: 'kunst',
     name: 'YO HIGHNESS',
-    tagline: 'QUEER PERFORMANCE ARTIST',
+    tagline: 'ART IS NOT FOR AMATEURS',
     color: '#f2c14e',
     sheet: 'kunst',
     hp: 105,
