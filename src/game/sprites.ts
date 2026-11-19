@@ -63,6 +63,11 @@ export async function loadSprites() {
   )
 }
 
+/** true when the atlas was found (heroes whose art is not made yet stay off the select screen) */
+export function hasSheet(v: SheetKey): boolean {
+  return sheets.has(v)
+}
+
 export function sheet(v: SheetKey): Sheet {
   return sheets.get(v)!
 }

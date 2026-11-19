@@ -22,6 +22,10 @@ export interface Player extends Fighter {
   runJump?: boolean
   /** set for one frame when the double jump fires (the game puffs dust) */
   doubleJumped?: boolean
+  /** frames left of LOLLI's sugar rush (moves faster) */
+  boostT: number
+  /** frames since last hurt (OMA HILDE heals when left alone) */
+  calmT: number
 }
 
 /** two taps of the same direction within this many frames start a run */
@@ -37,6 +41,8 @@ export function makePlayer(id: HeroId, x: number, y: number): Player {
     airAttackUsed: false,
     score: 0,
     slowT: 0,
+    boostT: 0,
+    calmT: 0,
     tapDir: 0,
     tapT: 99,
     jumps: 0,
@@ -48,7 +54,8 @@ export function updatePlayer(p: Player, input: Input) {
   const h = input.held
   if (p.specialCd > 0) p.specialCd--
   if (p.slowT > 0) p.slowT--
-  const slow = p.slowT > 0 ? 0.55 : 1
+  if (p.boostT > 0) p.boostT--
+  const slow = (p.slowT > 0 ? 0.55 : 1) * (p.boostT > 0 ? 1.35 : 1)
   if (p.comboTimer > 0) p.comboTimer--
   else p.comboStep = 0
   if (input.pressed.attack) p.buffered = INPUT_BUFFER

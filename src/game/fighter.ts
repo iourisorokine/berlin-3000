@@ -42,6 +42,12 @@ export interface Move {
   depth?: number
   /** frames the victim stays dazed (dancing) instead of a short flinch */
   stun?: number
+  /** multi-hit: the same targets can be hit again every this many frames while active */
+  rehit?: number
+  /** the hero spins on the spot (tornado specials) */
+  spin?: boolean
+  /** throws something instead of hitting up close (VINYL VIKTOR's records) */
+  projectile?: { sprite: string; speed: number; damage: number; knockdown: boolean }
   /** forward speed during the active frames */
   lunge?: number
   /** the attacker's trick at the first active frame (effect + sound) */
@@ -198,7 +204,7 @@ export const canBeHit = (f: Fighter) =>
 export function inReach(a: Fighter, t: Fighter, m: Move) {
   if (m.radial) return Math.abs(t.x - a.x) < m.reach && Math.abs(t.y - a.y) < (m.depth ?? 22) && t.z < 20
   const dx = (t.x - a.x) * a.facing
-  return dx > -8 && dx < m.reach + 10 && Math.abs(t.y - a.y) < HIT_DEPTH && Math.abs(t.z - a.z) < HIT_HEIGHT
+  return dx > -8 && dx < m.reach + 10 && Math.abs(t.y - a.y) < (m.depth ?? HIT_DEPTH) && Math.abs(t.z - a.z) < HIT_HEIGHT
 }
 
 /** Applies a hit. Returns true when the victim goes down. */
@@ -326,7 +332,9 @@ export function drawFighter(ctx: CanvasRenderingContext2D, f: Fighter, camX: num
   if (f.invuln > 3 && f.isPlayer && Math.floor(f.invuln / 3) % 2 === 0) return
   const p = pose(f)
   // dazed: dances on the spot, turning left and right to the beat
-  const facing = f.stunT > 0 && Math.floor(f.stunT / 12) % 2 ? (-f.facing as 1 | -1) : f.facing
+  let facing = f.stunT > 0 && Math.floor(f.stunT / 12) % 2 ? (-f.facing as 1 | -1) : f.facing
+  // tornado specials: spin on the spot
+  if (f.state === 'special' && f.move?.spin && isActive(f) && Math.floor(f.t / 4) % 2) facing = -facing as 1 | -1
   const lying = (f.state === 'down' || f.state === 'dead') && !f.anim.down
   drawFrame(ctx, sheet(f.variant), p.name, sx, f.y - f.z + p.bob + (lying ? -4 : 0), facing, {
     flash: f.flash > 3,

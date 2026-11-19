@@ -14,7 +14,8 @@ What it does, per cell of each sheet:
   4. snaps it to a real pixel grid and one shared palette per character,
   5. records the feet anchor (bottom of the feet, middle of the legs);
      a sheet's "anchorX" can override it as a fraction of the frame width.
-Per-sheet options: "scale" (fixed art px per image px), "keepAll" (keep every blob in a cell,
+Per-sheet options: "scale" (fixed art px per image px), "standFactor" (height of the "stand"
+poses relative to a normal standing pose, e.g. 0.92 for a leaning hurt pose), "keepAll" (keep every blob in a cell,
 for effects made of scattered pieces), "cellAnchor": "center" | "baseline" (anchor taken from
 the grid cell instead of the feet, so the frames of an effect stay aligned).
 """
@@ -131,6 +132,17 @@ def quantize_all(images, colors: int):
 
 
 def build(name: str, cfg: dict):
+    # sheets whose raw image is not there yet are skipped (heroes waiting for their art)
+    cfg = dict(cfg)
+    missing = [sh["file"] for sh in cfg["sheets"] if not (RAW / sh["file"]).exists()]
+    cfg["sheets"] = [sh for sh in cfg["sheets"] if (RAW / sh["file"]).exists()]
+    if missing:
+        print(f"  waiting for: {', '.join(missing)}")
+    if not cfg["sheets"]:
+        print("  skipped: no sheets yet")
+        return
+    if cfg.get("scaleFrom") not in [sh["file"] for sh in cfg["sheets"]]:
+        cfg["scaleFrom"] = cfg["sheets"][0]["file"]
     target = cfg["targetHeight"]
     names, images = [], []
     overrides = {}
@@ -147,7 +159,8 @@ def build(name: str, cfg: dict):
             k = target / sheet["standHeightPx"]
         elif sheet.get("stand"):
             hs = [figs[frames.index(f)][1].shape[0] for f in sheet["stand"]]
-            k = target / float(np.median(hs))
+            # standFactor: how tall those reference poses are compared with a standing pose
+            k = target * sheet.get("standFactor", 1.0) / float(np.median(hs))
         else:
             k = scale
         if scale is None:
@@ -168,6 +181,8 @@ def build(name: str, cfg: dict):
     plist = cfg.get("portraits")
     plist = plist if isinstance(plist, list) else ([plist] if plist else [])
     for p in plist:
+        if not (RAW / p["file"]).exists():
+            continue
         figs = list(cell_figures(RAW / p["file"], p["cols"], p["rows"]))
         for idx, pname in p["cells"].items():
             f = figs[int(idx)]

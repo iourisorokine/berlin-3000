@@ -323,6 +323,38 @@
           "getup"
         ]
       }
+    ],
+    "portraits": [
+      {
+        "file": "enemy_raver_queen_A.png",
+        "cols": 4,
+        "rows": 2,
+        "height": 40,
+        "cropTop": 0.4,
+        "cells": {
+          "0": "portrait_neutral"
+        }
+      },
+      {
+        "file": "enemy_raver_queen_B.png",
+        "cols": 4,
+        "rows": 2,
+        "height": 40,
+        "cropTop": 0.4,
+        "cells": {
+          "1": "portrait_angry"
+        }
+      },
+      {
+        "file": "enemy_raver_queen_B.png",
+        "cols": 4,
+        "rows": 2,
+        "height": 40,
+        "cropTop": 0.45,
+        "cells": {
+          "4": "portrait_hurt"
+        }
+      }
     ]
   },
   "mullet": {
@@ -888,5 +920,296 @@
         }
       }
     ]
+  },
+  "lolli": {
+    "targetHeight": 68,
+    "colors": 48,
+    "scaleFrom": "hero_lolli_A.png",
+    "sheets": [
+      {
+        "file": "hero_lolli_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "hero_lolli_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "c1a"
+        ],
+        "frames": [
+          "c1a",
+          "c1b",
+          "c2a",
+          "c2b",
+          "f1",
+          "f2",
+          "f3",
+          "f4"
+        ]
+      },
+      {
+        "file": "hero_lolli_C.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "hurt"
+        ],
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jkick",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jkick": 0.45
+        },
+        "standFactor": 0.92
+      },
+      {
+        "file": "hero_lolli_D.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "win2"
+        ],
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ],
+        "standFactor": 1.05
+      }
+    ],
+    "portraits": {
+      "file": "hero_lolli_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    }
+  },
+  "oma": {
+    "targetHeight": 62,
+    "colors": 48,
+    "scaleFrom": "hero_oma_A.png",
+    "sheets": [
+      {
+        "file": "hero_oma_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "hero_oma_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "c1a"
+        ],
+        "frames": [
+          "c1a",
+          "c1b",
+          "c2a",
+          "c2b",
+          "f1",
+          "f2",
+          "f3",
+          "f4"
+        ]
+      },
+      {
+        "file": "hero_oma_C.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "hurt"
+        ],
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jkick",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jkick": 0.45
+        },
+        "standFactor": 0.92
+      },
+      {
+        "file": "hero_oma_D.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "win2"
+        ],
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ],
+        "standFactor": 1.05
+      }
+    ],
+    "portraits": {
+      "file": "hero_oma_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    }
+  },
+  "viktor": {
+    "targetHeight": 70,
+    "colors": 48,
+    "scaleFrom": "hero_viktor_A.png",
+    "sheets": [
+      {
+        "file": "hero_viktor_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "hero_viktor_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "c1a"
+        ],
+        "frames": [
+          "c1a",
+          "c1b",
+          "c2a",
+          "c2b",
+          "f1",
+          "f2",
+          "f3",
+          "f4"
+        ]
+      },
+      {
+        "file": "hero_viktor_C.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "hurt"
+        ],
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jkick",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jkick": 0.45
+        },
+        "standFactor": 0.92
+      },
+      {
+        "file": "hero_viktor_D.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "win2"
+        ],
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ],
+        "standFactor": 1.05
+      }
+    ],
+    "portraits": {
+      "file": "hero_viktor_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    }
   }
 }

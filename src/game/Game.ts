@@ -21,7 +21,7 @@ import { FixedLoop } from './loop'
 import { HERO_ORDER, HEROES, type HeroId } from './heroes'
 import { makePlayer, updatePlayer, type Player } from './player'
 import { drawBreakable, gone, LOOT, makeBreakables, standing, updateBreakable, type Breakable } from './props'
-import { drawFrame, drawPortrait, loadSprites, sheet } from './sprites'
+import { drawFrame, drawPortrait, hasSheet, loadSprites, sheet } from './sprites'
 
 /** what a pickup does: heal (hp), refill the special, or score points */
 const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolean; score?: number }> = {
@@ -107,6 +107,20 @@ const WAVES: Wave[] = [
   },
 ]
 
+/** a thrown record: spins, flies straight and slices through everyone in its path */
+interface Projectile {
+  x: number
+  y: number
+  z: number
+  vx: number
+  sprite: string
+  damage: number
+  knockdown: boolean
+  rot: number
+  t: number
+  hit: Set<number>
+}
+
 export interface GameCallbacks {
   onScene: (s: Scene) => void
 }
@@ -140,6 +154,12 @@ export class Game {
   /** hits landed in a row (resets after a pause) and frames left before it resets */
   private comboHits = 0
   private comboT = 0
+  private projectiles: Projectile[] = []
+
+  /** heroes whose sprites exist, in select-screen order */
+  private heroes(): HeroId[] {
+    return HERO_ORDER.filter((id) => hasSheet(HEROES[id].sheet))
+  }
 
   private cb: GameCallbacks
 
@@ -192,6 +212,7 @@ export class Game {
     this.cleared = false
     this.comboHits = 0
     this.comboT = 0
+    this.projectiles = []
   }
 
   // ------------------------------------------------------------ update
@@ -209,8 +230,9 @@ export class Game {
         return
       case 'select':
         if (pr.left || pr.right) {
-          const i = HERO_ORDER.indexOf(this.heroId) + (pr.right ? 1 : -1)
-          this.heroId = HERO_ORDER[(i + HERO_ORDER.length) % HERO_ORDER.length]
+          const list = this.heroes()
+          const i = list.indexOf(this.heroId) + (pr.right ? 1 : -1)
+          this.heroId = list[(i + list.length) % list.length]
           audio.swing()
         }
         if (this.sceneT > 10 && (pr.start || pr.attack)) {
@@ -263,6 +285,16 @@ export class Game {
     if (this.comboT > 0 && --this.comboT === 0) this.comboHits = 0
     if (p.state !== 'dead') updatePlayer(p, this.input)
     if (p.running && p.t % 9 === 0) this.fx.dust(p.x - p.facing * 8, p.y)
+    // throwing moves launch their projectile on the first active frame
+    if (p.move?.projectile && (p.state === 'attack' || p.state === 'special') && p.t === p.move.active[0]) {
+      const pr = p.move.projectile
+      this.projectiles.push({ x: p.x + p.facing * 16, y: p.y, z: 40, vx: p.facing * pr.speed, sprite: pr.sprite, damage: pr.damage, knockdown: pr.knockdown, rot: 0, t: 0, hit: new Set() })
+      p.connected = true // the throw counts as a hit for the combo
+      audio.swing()
+    }
+    // OMA HILDE gets her breath back when left alone for 3 seconds
+    p.calmT++
+    if (p.hero.regen && p.calmT > 180 && p.hp > 0 && p.hp < p.maxHp && this.tick % p.hero.regen === 0) p.hp++
     if (p.doubleJumped) {
       p.doubleJumped = false
       this.fx.dust(p.x, p.y - p.z + 4)
@@ -277,7 +309,27 @@ export class Game {
         this.fx.music(p.x + p.facing * 14, p.y, 52)
         this.psyT = 80
         audio.music()
+      } else if (p.hero.specialFx === 'gust') {
+        for (let i = 0; i < 3; i++) this.fx.gust(p.x + p.facing * (20 + i * 30), p.y + (i - 1) * 6, p.facing)
+        this.shake = 6
+        audio.whoosh()
+      } else if (p.hero.specialFx === 'tornado') {
+        this.fx.dust(p.x - 22, p.y, true)
+        this.fx.dust(p.x + 22, p.y, true)
+        this.fx.gust(p.x - 10, p.y, -1)
+        this.fx.gust(p.x + 10, p.y, 1)
+        audio.whoosh()
+      } else if (p.hero.specialFx === 'drop') {
+        this.fx.shockwave(p.x, p.y)
+        this.fx.music(p.x, p.y, 40)
+        this.shake = 18
+        audio.thud()
+        audio.music()
       } else this.fx.ramDust(p.x - p.facing * 14, p.y, p.facing)
+      if (p.hero.sugarRush) {
+        p.boostT = p.hero.sugarRush
+        this.fx.popup(p.x, p.y - 96, 'SUGAR RUSH!', '#ff4fa3')
+      }
       this.fx.popup(p.x, p.y - 84, p.hero.specialName, '#5af0ff')
     }
     for (const e of this.enemies) {
@@ -317,6 +369,7 @@ export class Game {
       }
 
     this.resolveHits()
+    this.updateProjectiles()
     this.dominoes()
     this.updatePickups()
     for (const b of this.props) updateBreakable(b)
@@ -359,6 +412,11 @@ export class Game {
   }
 
   private spawn(s: Spawn) {
+    // no mirror matches: when a hero shares a sheet with an enemy, that enemy is swapped
+    if (ENEMY_TYPES[s.kind].sheet === this.player.hero.sheet) {
+      const alt: EnemyKind[] = ['punkgirl', 'monk', 'mullet']
+      s = { ...s, kind: alt[this.enemies.length % alt.length] }
+    }
     const y = GROUND_TOP + 6 + Math.random() * (GROUND_BOT - GROUND_TOP - 12)
     let e: Enemy
     if (s.from === 'queue') e = makeEnemy(s.kind, s.gap!, BARRIER_Y - 8, true)
@@ -371,7 +429,9 @@ export class Game {
   private resolveHits() {
     const p = this.player
     // the player's attacks
-    const pAttacking = p.move && ((p.state === 'jump' && p.z > 0) || ((p.state === 'attack' || p.state === 'special') && isActive(p)))
+    const pAttacking = p.move && !p.move.projectile && ((p.state === 'jump' && p.z > 0) || ((p.state === 'attack' || p.state === 'special') && isActive(p)))
+    // multi-hit moves (tornado specials) can hit the same enemies again every few frames
+    if (pAttacking && p.move!.rehit && (p.t - p.move!.active[0]) % p.move!.rehit === 0) p.hitList.clear()
     if (pAttacking) {
       for (const e of this.enemies) {
         if (!canBeHit(e) || p.hitList.has(e.id) || !inReach(p, e, p.move!)) continue
@@ -418,6 +478,7 @@ export class Game {
       this.fx.popup(t.x, t.y - 92, 'GROOVE!', '#c46bff')
     }
     const down = takeHit(t, a, move)
+    if (t.isPlayer) (t as Player).calmT = 0
     const heavy = !!m.heavy || down
     audio.hit(heavy)
     if (a.isPlayer && a.state === 'special' && (a as Player).hero.specialFx === 'ram') this.fx.ramHit(t.x - a.facing * 4, t.y, a.facing)
@@ -450,6 +511,35 @@ export class Game {
         }
       }
     }
+  }
+
+  private updateProjectiles() {
+    for (const pr of this.projectiles) {
+      pr.t++
+      pr.x += pr.vx
+      pr.rot += 0.5
+      for (const e of this.enemies) {
+        if (!canBeHit(e) || pr.hit.has(e.id) || Math.abs(e.x - pr.x) > 12 || Math.abs(e.y - pr.y) > 10) continue
+        pr.hit.add(e.id)
+        const dir = (pr.vx > 0 ? 1 : -1) as 1 | -1
+        const thrower = { ...this.player, x: pr.x - dir * 8, facing: dir, power: 1 }
+        const down = takeHit(e, thrower, { id: 'record', frames: [], active: [0, 0], reach: 0, damage: pr.damage, knockback: 2.6, knockdown: pr.knockdown })
+        this.fx.spark(e.x, e.y, 40, down)
+        this.fx.hitGag(e.x, e.y, 46, dir, down)
+        audio.hit(down)
+        this.freeze = HITSTOP
+        this.lastFoe = e
+        this.lastFoeT = 180
+        this.countHit()
+        this.player.score += Math.round(pr.damage * 10 * this.multiplier())
+        this.player.specialCd = Math.max(0, this.player.specialCd - pr.damage * 5)
+        if (e.hp <= 0) {
+          this.fx.confetti(e.x, e.y, 40)
+          this.player.score += ENEMY_TYPES[e.kind].score
+        }
+      }
+    }
+    this.projectiles = this.projectiles.filter((pr) => pr.t < 120 && pr.x > this.camX - 40 && pr.x < this.camX + VIEW_W + 40)
   }
 
   private countHit() {
@@ -602,6 +692,16 @@ export class Game {
     const playing = this.scene !== 'title' && this.scene !== 'select'
     const front: { y: number; draw: () => void }[] = all.filter((f) => f.y >= BARRIER_Y).map((f) => ({ y: f.y, draw: () => this.drawOne(ctx, f, cam) }))
     if (playing) for (const b of this.props) front.push({ y: b.y, draw: () => drawBreakable(ctx, b, cam) })
+    if (playing)
+      for (const pr of this.projectiles)
+        front.push({
+          y: pr.y,
+          draw: () => {
+            ctx.fillStyle = 'rgba(8,6,16,0.4)'
+            ctx.fillRect(Math.round(pr.x - cam) - 4, Math.round(pr.y), 9, 1)
+            drawFrame(ctx, sheet('items'), pr.sprite, pr.x - cam, pr.y - pr.z, 1, { tilt: pr.rot })
+          },
+        })
     front.sort((a, b) => a.y - b.y)
     for (const d of front) d.draw()
     this.fx.drawAir(ctx, cam)
@@ -679,25 +779,52 @@ export class Game {
 
   private drawSelect(ctx: CanvasRenderingContext2D, t: number) {
     dim(ctx, 0.6)
-    drawText(ctx, 'CHOOSE YOUR FIGHTER', VIEW_W >> 1, 12, { scale: 2, align: 'center', color: '#ffe14a', outline: '#14101c', shadow: '#14101c' })
-    const w = 120
-    HERO_ORDER.forEach((id, i) => {
+    drawText(ctx, 'CHOOSE YOUR FIGHTER', VIEW_W >> 1, 10, { scale: 2, align: 'center', color: '#ffe14a', outline: '#14101c', shadow: '#14101c' })
+    const list = this.heroes()
+    if (!list.includes(this.heroId)) this.heroId = list[0]
+    // a row of portraits
+    const pw = 44
+    const x0 = Math.round((VIEW_W - list.length * pw) / 2)
+    list.forEach((id, i) => {
       const h = HEROES[id]
-      const cx = Math.round((VIEW_W / HERO_ORDER.length) * (i + 0.5))
-      const on = this.heroId === id
+      const on = id === this.heroId
+      const x = x0 + i * pw
+      ctx.fillStyle = on ? h.color : '#14101c'
+      ctx.fillRect(x, 31, pw - 4, 44)
       ctx.fillStyle = on ? '#3a2a5a' : '#1a1428'
-      ctx.fillRect(cx - w / 2, 34, w, 156)
-      ctx.fillStyle = on ? h.color : '#3a3450'
-      ctx.fillRect(cx - w / 2, 34, w, 2)
-      ctx.fillRect(cx - w / 2, 188, w, 2)
-      const s = sheet(h.sheet)
-      drawPortrait(ctx, s, on ? 'portrait_angry' : 'portrait_neutral', cx - w / 2 + 6, 42)
-      const frames = on ? h.anim.idle : [h.anim.idle[0]]
-      drawFrame(ctx, s, frames[Math.floor(t / h.anim.idleRate) % frames.length], cx + 20, 144, 1, { alpha: on ? 1 : 0.55 })
-      const big = h.name.length <= 9
-      drawText(ctx, h.name, cx, big ? 150 : 154, { scale: big ? 2 : 1, align: 'center', color: on ? h.color : '#77708a', outline: '#14101c' })
-      drawText(ctx, h.tagline, cx, 167, { align: 'center', color: on ? '#ffffff' : '#77708a', outline: '#14101c' })
-      drawText(ctx, h.trait, cx, 177, { align: 'center', color: on ? h.color : '#5a5470', outline: '#14101c' })
+      ctx.fillRect(x + 1, 32, pw - 6, 42)
+      ctx.save()
+      if (!on) ctx.globalAlpha = 0.55
+      drawPortrait(ctx, sheet(h.sheet), on ? 'portrait_angry' : 'portrait_neutral', x + 2, 33)
+      ctx.restore()
+    })
+    // the selected hero, big
+    const h = HEROES[this.heroId]
+    const s = sheet(h.sheet)
+    ctx.fillStyle = 'rgba(26,20,40,0.85)'
+    ctx.fillRect(40, 84, VIEW_W - 80, 104)
+    ctx.fillStyle = h.color
+    ctx.fillRect(40, 84, VIEW_W - 80, 1)
+    ctx.fillRect(40, 187, VIEW_W - 80, 1)
+    drawFrame(ctx, s, h.anim.idle[Math.floor(t / h.anim.idleRate) % h.anim.idle.length], 104, 180, 1)
+    const tx = 156
+    drawText(ctx, h.name, tx, 96, { scale: 2, color: h.color, outline: '#14101c' })
+    drawText(ctx, h.tagline, tx, 116, { color: '#ffffff', outline: '#14101c' })
+    drawText(ctx, h.trait, tx, 130, { color: h.color, outline: '#14101c' })
+    drawText(ctx, `SPECIAL: ${h.specialName}`, tx, 144, { color: '#5af0ff', outline: '#14101c' })
+    // stat bars: health, speed, reach
+    const stats: [string, number][] = [
+      ['POWER', Math.max(...h.combo.map((m) => m.damage), h.special.damage) / 20],
+      ['SPEED', h.walkX / 1.45],
+      ['HEALTH', h.hp / 150],
+    ]
+    stats.forEach(([label, k], i) => {
+      const y = 156 + i * 9
+      drawText(ctx, label, tx, y, { color: '#9aa2c4', outline: '#14101c' })
+      ctx.fillStyle = '#14101c'
+      ctx.fillRect(tx + 44, y, 82, 6)
+      ctx.fillStyle = h.color
+      ctx.fillRect(tx + 45, y + 1, Math.round(80 * Math.min(1, k)), 4)
     })
     if (Math.floor(t / 25) % 2 === 0) drawText(ctx, '< >  CHOOSE     ENTER / X  FIGHT', VIEW_W >> 1, 200, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
   }
