@@ -18,6 +18,7 @@ import { canBeHit, drawFighter, inReach, isActive, physics, setState, takeHit, t
 import { drawText } from './font'
 import { dim, drawBanner, drawCombo, drawGo, drawHud } from './hud'
 import { Input } from './input'
+import { drawLogo } from './logo'
 import { FixedLoop } from './loop'
 import { HERO_ORDER, HEROES, type HeroId } from './heroes'
 import { makePlayer, updatePlayer, type Player } from './player'
@@ -126,6 +127,8 @@ export interface GameCallbacks {
   onScene: (s: Scene) => void
   /** the SOUND menu entry (the mute state lives in the page) */
   onToggleMute?: () => void
+  /** on-screen touch controls are shown (menu hints name the touch buttons) */
+  touch?: boolean
 }
 
 export class Game {
@@ -207,7 +210,8 @@ export class Game {
 
   /** heroes whose sprites exist, in select-screen order */
   private heroes(): HeroId[] {
-    return HERO_ORDER.filter((id) => hasSheet(HEROES[id].sheet))
+    // the redesigned RAVE QUEEN takes over from the enemy-sheet version once her art exists
+    return HERO_ORDER.map((id) => (id === 'queen' && hasSheet('ravequeen') ? 'ravequeen' : id)).filter((id) => hasSheet(HEROES[id].sheet))
   }
 
   private cb: GameCallbacks
@@ -500,7 +504,8 @@ export class Game {
 
   private spawn(s: Spawn) {
     // no mirror matches: when a hero shares a sheet with an enemy, that enemy is swapped
-    if (ENEMY_TYPES[s.kind].sheet === this.player.hero.sheet) {
+    const look = ENEMY_TYPES[s.kind].sheet
+    if (look === this.player.hero.sheet || look === this.player.hero.twin) {
       const alt: EnemyKind[] = ['punkgirl', 'monk', 'mullet']
       s = { ...s, kind: alt[this.enemies.length % alt.length] }
     }
@@ -808,7 +813,7 @@ export class Game {
     switch (this.scene) {
       case 'title':
         dim(ctx, 0.55)
-        drawBanner(ctx, [{ text: 'BERLIN', scale: 4, color: '#f2f2f8' }, { text: '3000', scale: 4, color: '#ff3a5a' }], 30)
+        drawLogo(ctx, this.tick)
         drawText(ctx, 'LEVEL 1: QUEUE TO BERG', VIEW_W >> 1, 112, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
         if (this.showControls) {
           this.drawControls(ctx)
@@ -816,7 +821,7 @@ export class Game {
         }
         this.drawMenu(ctx, 136)
         if (t < 400 || Math.floor(t / 25) % 2 === 0)
-          drawText(ctx, 'UP/DOWN CHOOSE   ENTER OR X OK   (CLICK THE GAME FIRST)', VIEW_W >> 1, 196, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
+          drawText(ctx, this.cb.touch ? 'STICK UP/DOWN CHOOSE   HIT OK' : 'UP/DOWN CHOOSE   ENTER OR X OK   (CLICK THE GAME FIRST)', VIEW_W >> 1, 196, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
         return
       case 'select':
         this.drawSelect(ctx, t)

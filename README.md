@@ -23,7 +23,7 @@ The game is then live at https://iourisorokine.github.io/berlin-3000/
 | --- | --- |
 | arrows / WASD | move (left/right and in depth) |
 | X (or J) | hit; keep hitting for the combo (hits in a row raise the score multiplier) |
-| C / Space (or K) | jump; X in the air = air attack; JULE can jump again in mid-air |
+| C / Space (or K) | jump; X in the air = air attack; CRAZY NESS can jump again in mid-air |
 | tap left/right twice | run; X while running = dash attack, jump while running = long jump |
 | V (or L) | special move (recharges over time, faster with every hit you land) |
 | Esc / P | pause menu: resume, restart the level, change fighter, main menu |
@@ -58,7 +58,7 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | file | what |
 | --- | --- |
 | `src/game/constants.ts` | screen size, physics, combat feel (hit-stop, reach), enemy limits |
-| `src/game/heroes.ts` | JULE, SHOVELIST, RAVE QUEEN, LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
+| `src/game/heroes.ts` | CRAZY NESS (id jule), SHOVELIST, RAVE QUEEN (enemy-sheet version and the `ravequeen` redesign), LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
 | `src/game/enemy.ts` | enemy types and AI |
 | `src/game/Game.ts` | waves, camera, hit resolution, scenes |
 | `src/game/stage.ts` | the code-drawn placeholder level (sky, Fernsehturm, power plant, queue) |

@@ -62,9 +62,8 @@ export function TouchControls({ input, scene }: { input: Input; scene: Scene }) 
       >
         <div className="knob" ref={knob} />
       </div>
-      <div className="mid">
-        {btn(menu ? 'start' : 'pause', menu ? 'START' : 'PAUSE', 'small')}
-      </div>
+      {/* in menus HIT confirms, so the only top button needed is PAUSE during a fight */}
+      <div className="mid">{!menu && btn('pause', 'PAUSE', 'small')}</div>
       <div className="buttons">
         {btn('special', 'SPEC', 'special')}
         {btn('jump', 'JUMP', 'jump')}

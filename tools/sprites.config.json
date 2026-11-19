@@ -1315,5 +1315,102 @@
       "walk4"
     ],
     "res": 2
+  },
+  "ravequeen": {
+    "targetHeight": 83,
+    "colors": 48,
+    "scaleFrom": "hero_ravequeen_A.png",
+    "sheets": [
+      {
+        "file": "hero_ravequeen_A.png",
+        "cols": 4,
+        "rows": 2,
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ],
+        "stand": [
+          "idle1",
+          "idle4"
+        ]
+      },
+      {
+        "file": "hero_ravequeen_B.png",
+        "cols": 4,
+        "rows": 2,
+        "frames": [
+          "c1a",
+          "c1b",
+          "c2a",
+          "c2b",
+          "f1",
+          "f2",
+          "f3",
+          "f4"
+        ]
+      },
+      {
+        "file": "hero_ravequeen_C.png",
+        "cols": 4,
+        "rows": 2,
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jkick",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jkick": 0.45
+        }
+      },
+      {
+        "file": "hero_ravequeen_D.png",
+        "cols": 4,
+        "rows": 2,
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ]
+      }
+    ],
+    "portraits": {
+      "file": "hero_ravequeen_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    },
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ],
+    "res": 2
   }
 }

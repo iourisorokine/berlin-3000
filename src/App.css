@@ -126,3 +126,78 @@ body,
   width: 74px;
   height: 34px;
 }
+
+/* ---------- phones and tablets: full-screen game, controls floating over it ---------- */
+.app.touch {
+  gap: 0;
+}
+
+.app.touch .mute {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  margin: 0;
+  background: rgba(10, 8, 20, 0.45);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 3;
+}
+
+.app.touch .touch-controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: none;
+  padding: 0 max(22px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.app.touch .stick,
+.app.touch .buttons,
+.app.touch .tbtn {
+  pointer-events: auto;
+}
+
+.app.touch .stick {
+  background: rgba(21, 18, 42, 0.35);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.app.touch .knob {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.app.touch .tbtn {
+  opacity: 0.6;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* START / PAUSE sits at the top centre, out of the way of the fight */
+.app.touch .mid {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.rotate-hint {
+  display: none;
+}
+
+@media (orientation: portrait) {
+  .app.touch .rotate-hint {
+    display: block;
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    margin: 48px 0 0;
+    text-align: center;
+    font-size: 11px;
+    color: #8a86a0;
+  }
+}

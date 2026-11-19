@@ -17,7 +17,7 @@ export default function App() {
 
   // React only hosts the canvas, the scaling and the touch buttons; the game runs itself.
   useEffect(() => {
-    const game = new Game(canvasRef.current!, { onScene: setScene, onToggleMute: () => setMuted((m) => !m) })
+    const game = new Game(canvasRef.current!, { onScene: setScene, onToggleMute: () => setMuted((m) => !m), touch: isTouch() })
     gameRef.current = game
     game.start()
     return () => {
@@ -41,7 +41,8 @@ export default function App() {
 
   useEffect(() => audio.setMuted(muted), [muted])
 
-  const scale = screenScale(VIEW_W, VIEW_H, win.w, win.h, touch ? 150 : 40)
+  // phones and tablets: the game fills the whole screen and the controls float on top of it
+  const scale = touch ? Math.min(win.w / VIEW_W, win.h / VIEW_H) : screenScale(VIEW_W, VIEW_H, win.w, win.h, 40)
 
   return (
     // a click gives the page keyboard focus (it runs inside a frame) and unlocks audio
@@ -53,6 +54,7 @@ export default function App() {
         </button>
       </div>
       {touch && gameRef.current && <TouchControls input={gameRef.current.input} scene={scene} />}
+      {touch && <p className="rotate-hint">TURN YOUR PHONE SIDEWAYS FOR A BIGGER SCREEN</p>}
       {!touch && <p className="hint">Arrows / WASD move · X hit · C or Space jump · V special · Esc pause · M mute</p>}
     </div>
   )

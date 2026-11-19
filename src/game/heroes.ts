@@ -2,7 +2,7 @@ import { SIZE } from './constants'
 import { scaleReach, type AnimSet, type Move, type MoveFrame } from './fighter'
 import type { SheetKey } from './sprites'
 
-export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'lolli' | 'schwein' | 'kunst'
+export type HeroId = 'jule' | 'kalle' | 'shovel' | 'queen' | 'ravequeen' | 'lolli' | 'schwein' | 'kunst'
 
 /**
  * Order on the fighter-select screen. A hero only shows up once its sprite atlas exists
@@ -39,6 +39,8 @@ export interface HeroDef {
   dazeBonus?: number
   /** frames of speed boost after the special (LOLLI) */
   sugarRush?: number
+  /** an enemy that looks like this hero: kept out of this hero's fights (no mirror matches) */
+  twin?: string
   /** heals 1 HP every this many frames after 3 s without being hit */
   regen?: number
   /** one line on the select screen about what makes this hero different */
@@ -69,7 +71,7 @@ const STANDARD_ANIM: AnimSet = {
 export const HEROES: Record<HeroId, HeroDef> = {
   jule: {
     id: 'jule',
-    name: 'JULE',
+    name: 'CRAZY NESS',
     tagline: 'FAST TECHNO RAVER',
     color: '#c8ff3a',
     sheet: 'jule',
@@ -252,6 +254,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
     tagline: 'GOTH WITH A FAN',
     color: '#e6e6ff',
     sheet: 'queen',
+    twin: 'queen',
     hp: 95,
     walkX: 1.25,
     walkY: 0.8,
@@ -291,6 +294,44 @@ export const HEROES: Record<HeroId, HeroDef> = {
     specialName: 'FAN HURRICANE',
     specialFx: 'gust',
     runSpeed: 2.5,
+    specialCooldown: 360,
+    trait: 'LONGEST REACH',
+  },
+  // RAVE QUEEN redesigned as a hero with her own sheets (hero_ravequeen_*). When they are
+  // imported she replaces the version above, which borrows her enemy frames.
+  ravequeen: {
+    id: 'ravequeen',
+    name: 'RAVE QUEEN',
+    tagline: 'GOTH WITH A FAN',
+    color: '#b98cff',
+    sheet: 'ravequeen',
+    twin: 'queen',
+    hp: 95,
+    walkX: 1.3,
+    walkY: 0.8,
+    anim: STANDARD_ANIM,
+    combo: [
+      { id: 'fanjab', frames: [f('c1a', 4), f('c1b', 9)], active: [4, 8], reach: 46, damage: 6, knockback: 1.2, knockdown: false },
+      { id: 'fanslash', frames: [f('c2a', 5), f('c2b', 10)], active: [5, 10], reach: 52, damage: 8, knockback: 1.6, knockdown: false },
+      { id: 'coatspin', frames: [f('f1', 7), f('f2', 8), f('f3', 9), f('f4', 7)], active: [7, 17], reach: 56, damage: 13, knockback: 4, knockdown: true, heavy: true },
+    ],
+    air: { id: 'fandive', frames: [f('jkick', 999)], active: [0, 999], reach: 44, damage: 10, knockback: 2.4, knockdown: true },
+    dash: { id: 'dashfan', frames: [f('c2a', 4), f('c2b', 14)], active: [4, 14], reach: 52, damage: 10, knockback: 3, knockdown: true, lunge: 2.8 },
+    special: {
+      id: 'fanhurricane',
+      frames: [f('sp1', 14), f('sp2', 10), f('sp3', 22), f('sp4', 10)],
+      active: [24, 44],
+      reach: 130,
+      depth: 26,
+      damage: 12,
+      knockback: 5,
+      knockdown: true,
+      heavy: true,
+      multi: true,
+    },
+    specialName: 'FAN HURRICANE',
+    specialFx: 'gust',
+    runSpeed: 2.6,
     specialCooldown: 360,
     trait: 'LONGEST REACH',
   },
