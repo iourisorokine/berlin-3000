@@ -1,0 +1,892 @@
+{
+  "_comment": "One entry per character. 'frames' lists the meaning of each cell, left to right, top to bottom (null = skip). The sheet listed in 'scaleFrom' sets the size: its 'stand' frames are scaled to 'targetHeight' art pixels, and every other sheet of that character uses the same scale factor unless it sets its own 'standHeightPx'.",
+  "kalle": {
+    "targetHeight": 72,
+    "colors": 40,
+    "scaleFrom": "hero_kalle_X.png",
+    "sheets": [
+      {
+        "file": "hero_kalle_X.png",
+        "cols": 4,
+        "rows": 3,
+        "stand": [
+          "idle1",
+          "idle2"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "file": "hero_kalle_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "hammer4"
+        ],
+        "frames": [
+          "hook1",
+          "hook2",
+          "upper1",
+          "upper2",
+          "hammer1",
+          "hammer2",
+          "hammer3",
+          "hammer4"
+        ]
+      },
+      {
+        "file": "hero_kalle_C.png",
+        "cols": 4,
+        "rows": 2,
+        "standHeightPx": 376,
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jknee",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jknee": 0.5
+        }
+      },
+      {
+        "file": "hero_kalle_D.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "sp4"
+        ],
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ],
+        "anchorX": {
+          "sp2": 0.42,
+          "sp3": 0.45
+        }
+      }
+    ],
+    "portraits": {
+      "file": "hero_kalle_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    }
+  },
+  "jule": {
+    "targetHeight": 66,
+    "colors": 48,
+    "scaleFrom": "hero_jule_A.png",
+    "sheets": [
+      {
+        "file": "hero_jule_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "hero_jule_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "jab1",
+          "cross1"
+        ],
+        "frames": [
+          "jab1",
+          "jab2",
+          "cross1",
+          "cross2",
+          "kick1",
+          "kick2",
+          "kick3",
+          "kick4"
+        ]
+      },
+      {
+        "file": "hero_jule_C.png",
+        "cols": 4,
+        "rows": 2,
+        "standHeightPx": 412,
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jkick",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jkick": 0.35
+        }
+      },
+      {
+        "file": "hero_jule_D.png",
+        "cols": 4,
+        "rows": 2,
+        "standHeightPx": 407,
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ]
+      }
+    ],
+    "portraits": {
+      "file": "hero_jule_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    }
+  },
+  "monk": {
+    "targetHeight": 74,
+    "colors": 32,
+    "scaleFrom": "enemy_raver_monk_A.png",
+    "sheets": [
+      {
+        "file": "enemy_raver_monk_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_raver_monk_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ]
+  },
+  "harness": {
+    "targetHeight": 74,
+    "colors": 32,
+    "scaleFrom": "enemy_raver_harness_A.png",
+    "sheets": [
+      {
+        "file": "enemy_raver_harness_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_raver_harness_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ]
+  },
+  "queen": {
+    "targetHeight": 72,
+    "colors": 32,
+    "scaleFrom": "enemy_raver_queen_A.png",
+    "sheets": [
+      {
+        "file": "enemy_raver_queen_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_raver_queen_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ]
+  },
+  "mullet": {
+    "targetHeight": 70,
+    "colors": 32,
+    "scaleFrom": "enemy_hipster_mullet_A.png",
+    "sheets": [
+      {
+        "file": "enemy_hipster_mullet_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_hipster_mullet_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ]
+  },
+  "extras": {
+    "targetHeight": 68,
+    "colors": 64,
+    "scaleFrom": "extras_queue_1.png",
+    "sheets": [
+      {
+        "file": "extras_queue_1.png",
+        "cols": 8,
+        "rows": 2,
+        "stand": [
+          "a2",
+          "a3",
+          "a4",
+          "a6",
+          "a7"
+        ],
+        "frames": [
+          "a1",
+          "a2",
+          "a3",
+          "a4",
+          "a5",
+          "a6",
+          "a7",
+          "a8",
+          "b1",
+          "b2",
+          "b3",
+          "b4",
+          "b5",
+          "b6",
+          "b7",
+          "b8"
+        ]
+      },
+      {
+        "file": "extras_queue_2.png",
+        "cols": 8,
+        "rows": 2,
+        "stand": [
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ],
+        "frames": [
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5",
+          "c6",
+          "c7",
+          "c8",
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7",
+          "d8"
+        ]
+      }
+    ]
+  },
+  "props": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "props_street.png",
+    "sheets": [
+      {
+        "file": "props_street.png",
+        "cols": 4,
+        "rows": 2,
+        "scale": 0.17,
+        "frames": [
+          "barrier",
+          "barrier_down",
+          "bin",
+          "bin_broken",
+          "boxes",
+          "boxes_broken",
+          "crate",
+          "cone"
+        ]
+      },
+      {
+        "file": "props_tall.png",
+        "cols": 4,
+        "rows": 1,
+        "scale": 0.17,
+        "frames": [
+          "lamp",
+          "pillar",
+          "tree",
+          "fencepost"
+        ]
+      }
+    ]
+  },
+  "items": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "items_pickups.png",
+    "sheets": [
+      {
+        "file": "items_pickups.png",
+        "cols": 4,
+        "rows": 4,
+        "scale": 0.085,
+        "frames": [
+          "doner",
+          "currywurst",
+          "pretzel",
+          "mate",
+          "beer",
+          "vinyl",
+          "brick",
+          "extinguisher",
+          "cash",
+          "phone",
+          "wristband",
+          "glowstick",
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ]
+  },
+  "fx": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "fx_common.png",
+    "sheets": [
+      {
+        "file": "fx_common.png",
+        "cols": 8,
+        "rows": 4,
+        "scale": 0.26,
+        "keepAll": true,
+        "cellAnchor": "center",
+        "frames": [
+          "hit1",
+          "hit2",
+          "hit3",
+          "hit4",
+          "heavy1",
+          "heavy2",
+          "heavy3",
+          "heavy4",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "dust1",
+          "dust2",
+          "dust3",
+          "dust4",
+          "stars1",
+          "stars2",
+          "stars3",
+          "stars4",
+          "flash1",
+          "flash2",
+          "flash3",
+          "flash4",
+          "bottle1",
+          "bottle2",
+          "bottle3",
+          "bottle4"
+        ]
+      },
+      {
+        "file": "fx_specials.png",
+        "cols": 4,
+        "rows": 2,
+        "scale": 0.36,
+        "keepAll": true,
+        "cellAnchor": "baseline",
+        "frames": [
+          "wave1",
+          "wave2",
+          "wave3",
+          "wave4",
+          "ramdust",
+          "ramlines",
+          "ramhit",
+          "ramfade"
+        ]
+      },
+      {
+        "file": "fx_gags.png",
+        "cols": 4,
+        "rows": 4,
+        "scale": 0.085,
+        "keepAll": true,
+        "cellAnchor": "center",
+        "frames": [
+          "sunglasses",
+          "buckethat",
+          "sneaker",
+          "cap",
+          "coin",
+          "keys",
+          "lighter",
+          "earbuds",
+          "gum1",
+          "gum2",
+          "gum3",
+          "gum4",
+          "sweat",
+          "puff",
+          "pigeon",
+          "feather"
+        ]
+      },
+      {
+        "file": "fx_music.png",
+        "cols": 4,
+        "rows": 2,
+        "scale": 0.34,
+        "keepAll": true,
+        "cellAnchor": "center",
+        "frames": [
+          "music1",
+          "music2",
+          "music3",
+          "music4",
+          "music5",
+          "music6",
+          "music7",
+          "music8"
+        ]
+      }
+    ]
+  },
+  "punkgirl": {
+    "targetHeight": 68,
+    "colors": 32,
+    "scaleFrom": "enemy_punk_girl_A.png",
+    "sheets": [
+      {
+        "file": "enemy_punk_girl_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_punk_girl_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ]
+  },
+  "tourist": {
+    "targetHeight": 70,
+    "colors": 32,
+    "scaleFrom": "enemy_tourist_selfie_A.png",
+    "sheets": [
+      {
+        "file": "enemy_tourist_selfie_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_tourist_selfie_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ]
+  },
+  "bouncer": {
+    "targetHeight": 90,
+    "colors": 40,
+    "scaleFrom": "boss_bouncer_A.png",
+    "sheets": [
+      {
+        "file": "boss_bouncer_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "boss_bouncer_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      },
+      {
+        "file": "boss_bouncer_C.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "nt1"
+        ],
+        "frames": [
+          "grab1",
+          "grab2",
+          "grab3",
+          "grab4",
+          "nt1",
+          "nt2",
+          "nt3",
+          "nt4"
+        ]
+      }
+    ],
+    "portraits": {
+      "file": "boss_bouncer_design.png",
+      "cols": 4,
+      "rows": 2,
+      "height": 40,
+      "cells": {
+        "4": "portrait_neutral",
+        "5": "portrait_angry",
+        "6": "portrait_hurt"
+      }
+    }
+  },
+  "shovel": {
+    "targetHeight": 68,
+    "colors": 48,
+    "scaleFrom": "hero_shovel_A.png",
+    "sheets": [
+      {
+        "file": "hero_shovel_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "hero_shovel_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "b1",
+          "b8"
+        ],
+        "frames": [
+          "b1",
+          "b2",
+          "b3",
+          "b4",
+          "b5",
+          "b6",
+          "b7",
+          "b8"
+        ]
+      },
+      {
+        "file": "hero_shovel_C.png",
+        "cols": 4,
+        "rows": 2,
+        "standHeightPx": 382,
+        "frames": [
+          "jcrouch",
+          "jair",
+          "jkick",
+          "jland",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "anchorX": {
+          "jair": 0.5,
+          "jkick": 0.4
+        }
+      },
+      {
+        "file": "hero_shovel_D.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "sp1",
+          "sp4"
+        ],
+        "frames": [
+          "sp1",
+          "sp2",
+          "sp3",
+          "sp4",
+          "win1",
+          "win2",
+          null,
+          null
+        ]
+      }
+    ],
+    "portraits": [
+      {
+        "file": "hero_shovel_A.png",
+        "cols": 4,
+        "rows": 2,
+        "height": 40,
+        "cropTop": 0.42,
+        "cells": {
+          "0": "portrait_neutral"
+        }
+      },
+      {
+        "file": "hero_shovel_B.png",
+        "cols": 4,
+        "rows": 2,
+        "height": 40,
+        "cropTop": 0.42,
+        "cells": {
+          "5": "portrait_angry"
+        }
+      },
+      {
+        "file": "hero_shovel_C.png",
+        "cols": 4,
+        "rows": 2,
+        "height": 40,
+        "cropTop": 0.5,
+        "cells": {
+          "4": "portrait_hurt"
+        }
+      }
+    ]
+  }
+}

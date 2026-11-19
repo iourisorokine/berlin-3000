@@ -1,0 +1,128 @@
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #05040c;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  color: #8a86a0;
+}
+
+.screen-wrap {
+  position: relative;
+}
+
+.screen {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #000;
+}
+
+.mute {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  font: inherit;
+  font-size: 11px;
+  color: #8a86a0;
+  background: none;
+  border: 1px solid #2c2840;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.hint {
+  margin: 22px 0 0;
+  font-size: 12px;
+}
+
+.touch-controls {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px 0;
+  box-sizing: border-box;
+}
+
+.stick {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: #15122a;
+  border: 2px solid #2c2846;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.knob {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #3a3460;
+  pointer-events: none;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: 64px 64px;
+  grid-template-rows: 64px 64px;
+  gap: 10px;
+}
+
+.tbtn {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  color: #fff;
+  background: #2a2444;
+  border: 2px solid #463e6c;
+}
+
+.tbtn:active {
+  filter: brightness(1.6);
+}
+
+.tbtn.attack {
+  background: #8a1830;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.tbtn.jump {
+  background: #1f4a7a;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.tbtn.special {
+  background: #1d6a6a;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.tbtn.small {
+  border-radius: 8px;
+  width: 74px;
+  height: 34px;
+}

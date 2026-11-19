@@ -1,0 +1,36 @@
+{
+ "levelLen": 2295,
+ "wallBase": 128,
+ "doorX": 2144,
+ "segments": [
+  {
+   "name": "stage_01_seg_a",
+   "x": 0,
+   "w": 461
+  },
+  {
+   "name": "stage_01_seg_b",
+   "x": 461,
+   "w": 461
+  },
+  {
+   "name": "stage_01_seg_b",
+   "x": 922,
+   "w": 461
+  },
+  {
+   "name": "stage_01_seg_c",
+   "x": 1383,
+   "w": 461
+  },
+  {
+   "name": "stage_01_seg_d",
+   "x": 1844,
+   "w": 451
+  }
+ ],
+ "farParallax": 0.12,
+ "farOffset": -150,
+ "towerX": 300,
+ "towerTipY": -8
+}
