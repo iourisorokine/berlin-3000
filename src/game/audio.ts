@@ -18,7 +18,7 @@ class Audio {
   /** time of the last kick, for visuals pulsing on the beat */
   lastKickAt = 0
   /** what plays in the background: the club through the walls, or a train on the rails */
-  mode: 'club' | 'train' = 'club'
+  mode: 'club' | 'train' | 'street' | 'cafe' = 'club'
   /** 0..1, how fast the train runs (rail clacks and rumble) */
   trainSpeed = 0
   private rumble: GainNode | null = null
@@ -63,6 +63,14 @@ class Audio {
     const ctx = this.ctx!
     if (this.mode === 'train') {
       this.scheduleTrain()
+      return
+    }
+    if (this.mode === 'street' || this.mode === 'cafe') {
+      if (this.rumble) this.rumble.gain.setTargetAtTime(0, ctx.currentTime, 0.2)
+      this.nextBeat = ctx.currentTime + 0.1
+      // a sunny Sunday: birds outside; inside the cafe the milk steamer hisses now and then
+      if (this.mode === 'street' && Math.random() < 0.035) this.chirp()
+      if (this.mode === 'cafe' && Math.random() < 0.012) this.burst(3200, 1.2, 0.03, 0.06, 'highpass')
       return
     }
     if (this.rumble) this.rumble.gain.setTargetAtTime(0, ctx.currentTime, 0.2)
@@ -124,6 +132,27 @@ class Audio {
     s.connect(f).connect(g).connect(this.master!)
     s.start(t)
     s.stop(t + 0.08)
+  }
+
+  /** a small bird: two or three quick rising whistles */
+  private chirp() {
+    const ctx = this.ctx!
+    const n = 2 + Math.floor(Math.random() * 2)
+    const base = 2600 + Math.random() * 1400
+    for (let i = 0; i < n; i++) {
+      const t = ctx.currentTime + 0.05 + i * 0.09
+      const o = ctx.createOscillator()
+      const g = ctx.createGain()
+      o.type = 'sine'
+      o.frequency.setValueAtTime(base, t)
+      o.frequency.exponentialRampToValueAtTime(base * 1.35, t + 0.06)
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.035, t + 0.01)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07)
+      o.connect(g).connect(this.master!)
+      o.start(t)
+      o.stop(t + 0.08)
+    }
   }
 
   /** brakes squealing into a station */

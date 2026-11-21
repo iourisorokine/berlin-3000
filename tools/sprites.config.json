@@ -1724,5 +1724,97 @@
         "keepAll": true
       }
     ]
+  },
+  "extras_prenzl": {
+    "targetHeight": 88,
+    "colors": 64,
+    "scaleFrom": "extras_prenzl.png",
+    "sheets": [
+      {
+        "file": "extras_prenzl.png",
+        "cols": 8,
+        "rows": 2,
+        "stand": [
+          "p2",
+          "p4"
+        ],
+        "frames": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6",
+          "p7",
+          "p8",
+          "q1",
+          "q2",
+          "q3",
+          "q4",
+          "q5",
+          "q6",
+          "q7",
+          "q8"
+        ],
+        "keepAll": true
+      }
+    ],
+    "res": 2
+  },
+  "props_prenzl": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "props_prenzl.png",
+    "sheets": [
+      {
+        "file": "props_prenzl.png",
+        "cols": 4,
+        "rows": 2,
+        "scale": 0.17,
+        "frames": [
+          "chair",
+          "chair_broken",
+          "table",
+          "table_broken",
+          "plant",
+          "plant_broken",
+          "veg",
+          "veg_broken"
+        ],
+        "keepAll": true
+      }
+    ]
+  },
+  "items_prenzl": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "items_prenzl.png",
+    "sheets": [
+      {
+        "file": "items_prenzl.png",
+        "cols": 4,
+        "rows": 4,
+        "scale": 0.0694,
+        "frames": [
+          "flatwhite",
+          "franzbroetchen",
+          "avotoast",
+          "carrotcake",
+          "oatmilk",
+          "sourdough",
+          "yogamat",
+          "pumpkin",
+          "goldkey",
+          "mug",
+          "glasscase",
+          "record",
+          null,
+          null,
+          null,
+          null
+        ],
+        "keepAll": true
+      }
+    ]
   }
 }

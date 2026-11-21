@@ -102,10 +102,16 @@ export type PickupKind =
   | 'doner' | 'currywurst' | 'pretzel' | 'mate' | 'cash' | 'phone' | 'wristband' | 'glowstick'
   // the U-Bahn's lost and found
   | 'ticket' | 'falafel' | 'gummies' | 'coffee' | 'umbrella' | 'pizzabox' | 'skate' | 'gnome' | 'shoe' | 'keys' | 'wallet' | 'shades'
+  // Prenzlauer Berg brunch
+  | 'flatwhite' | 'franzbroetchen' | 'avotoast' | 'carrotcake' | 'oatmilk' | 'sourdough' | 'yogamat' | 'pumpkin' | 'goldkey' | 'mug' | 'glasscase' | 'record'
 
-/** U-Bahn pickups live on their own sheet */
-const UBAHN_ITEMS = new Set<PickupKind>(['ticket', 'falafel', 'gummies', 'coffee', 'umbrella', 'pizzabox', 'skate', 'gnome', 'shoe', 'keys', 'wallet', 'shades'])
-export const itemSheet = (k: PickupKind) => (UBAHN_ITEMS.has(k) ? 'items_ubahn' : 'items')
+/** each level's pickups live on their own sheet */
+const ITEM_SHEETS: [string, PickupKind[]][] = [
+  ['items_ubahn', ['ticket', 'falafel', 'gummies', 'coffee', 'umbrella', 'pizzabox', 'skate', 'gnome', 'shoe', 'keys', 'wallet', 'shades']],
+  ['items_prenzl', ['flatwhite', 'franzbroetchen', 'avotoast', 'carrotcake', 'oatmilk', 'sourdough', 'yogamat', 'pumpkin', 'goldkey', 'mug', 'glasscase', 'record']],
+]
+const SHEET_OF = new Map<PickupKind, string>(ITEM_SHEETS.flatMap(([s, ks]) => ks.map((k) => [k, s] as [PickupKind, string])))
+export const itemSheet = (k: PickupKind) => SHEET_OF.get(k) ?? 'items'
 
 export interface Pickup {
   kind: PickupKind

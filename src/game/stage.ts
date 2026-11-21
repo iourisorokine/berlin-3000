@@ -37,6 +37,10 @@ export interface Stage {
   depart?(): void
   /** back to the start of the level (a new run) */
   reset?(): void
+  /** a side room entered through a door in the street (the design cafe): one screen with its own floor */
+  side?: { door: number; label: string; band: [number, number]; doorScreenX: number }
+  /** the hero is in the side room */
+  inSide?: boolean
   /** 0..1, how close the player is to the source of the music (the club door) */
   closeness(playerX: number): number
   /** a small picture of the level for the level-select screen */

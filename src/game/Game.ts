@@ -19,6 +19,7 @@ import { FixedLoop } from './loop'
 import { HERO_ORDER, HEROES, SPECIAL_SLOWDOWN, type HeroId } from './heroes'
 import { LEVELS, rollSpawns, rollWaves, unlockedCount, unlockNext, type Spawn, type WaveDef } from './levels'
 import { makePlayer, updatePlayer, type Player } from './player'
+import { drawBerlinMap, drawPin, SPOTS } from './map'
 import { drawBreakable, gone, LOOT, makeBreakables, standing, updateBreakable, type Breakable } from './props'
 import type { Stage } from './stage'
 import { drawFrame, drawPortrait, hasSheet, loadSprites, sheet } from './sprites'
@@ -35,6 +36,18 @@ const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolea
   glowstick: { label: '200', score: 200 },
   // the U-Bahn: a day ticket makes the inspectors harmless for 25 seconds
   ticket: { label: 'TAGESTICKET', ticket: true },
+  flatwhite: { label: 'FLAT WHITE: SPECIAL READY', special: true },
+  franzbroetchen: { label: 'FRANZBROETCHEN', hp: 20 },
+  avotoast: { label: 'AVOCADO TOAST', hp: 30 },
+  carrotcake: { label: 'KAROTTENKUCHEN', hp: 25 },
+  oatmilk: { label: '150', score: 150 },
+  sourdough: { label: 'SAUERTEIG', hp: 15 },
+  yogamat: { label: '150', score: 150 },
+  pumpkin: { label: 'KUERBIS', hp: 12 },
+  goldkey: { label: 'PENTHOUSE-SCHLUESSEL 1000', score: 1000 },
+  mug: { label: '200', score: 200 },
+  glasscase: { label: '300', score: 300 },
+  record: { label: 'RARE VINYL 500', score: 500 },
   falafel: { label: 'FALAFEL', hp: 30 },
   gummies: { label: 'GUMMIBAERCHEN', hp: 12 },
   coffee: { label: 'KAFFEE: SPECIAL READY', special: true },
@@ -132,6 +145,12 @@ export class Game {
   private exitOpen = false
   /** frames since the hero started walking through the exit door (0 = not yet) */
   private exitT = 0
+  /** the side room (cafe): not visited yet, fighting inside, won (can leave), left */
+  private sideState: 'none' | 'fight' | 'clear' | 'done' = 'none'
+  /** the circle wipe between the street and the side room */
+  private trans: { t: number; to: 'side' | 'street' } | null = null
+  /** what stays outside while the hero is in the side room */
+  private outside: { props: Breakable[]; bystanders: Bystander[]; pickups: Effects['pickups'] } | null = null
   /** highlighted entry of the menu on screen (title, pause, game over, win) */
   private menuIdx = 0
   /** the CONTROLS page of the main menu is open */
@@ -184,6 +203,10 @@ export class Game {
   }
 
   private cb: GameCallbacks
+  /** the little hero on the level-select map */
+  private mapWalker = { x: SPOTS.berghain.x, y: SPOTS.berghain.y, tx: 0, ty: 0, facing: 1 as 1 | -1 }
+  /** a click or tap on the canvas, in art pixels (used by the map) */
+  private tap: { x: number; y: number } | null = null
 
   constructor(canvas: HTMLCanvasElement, cb: GameCallbacks) {
     this.cb = cb
@@ -194,6 +217,11 @@ export class Game {
       () => this.render(),
     )
     this.input.onFirstInput = () => audio.start()
+    canvas.addEventListener('pointerdown', (e) => {
+      const r = canvas.getBoundingClientRect()
+      this.tap = { x: ((e.clientX - r.left) / r.width) * VIEW_W, y: ((e.clientY - r.top) / r.height) * VIEW_H }
+      audio.start()
+    })
     // handy in the browser console while tuning: __bb.player, __bb.enemies
     ;(window as unknown as { __bb: Game }).__bb = this
   }
@@ -233,6 +261,9 @@ export class Game {
     this.player.y = Math.max(band.top + 10, this.player.y)
     this.exitOpen = false
     this.exitT = 0
+    this.sideState = 'none'
+    this.trans = null
+    this.outside = null
     // bystanders spread over the level, never at the very start
     const bs = this.level.bystanders
     this.bystanders = []
@@ -287,13 +318,40 @@ export class Game {
         return
       }
       case 'levels': {
-        if (pr.left || pr.right) {
-          this.levelIdx = (this.levelIdx + (pr.right ? 1 : -1) + LEVELS.length) % LEVELS.length
+        const tap = this.tap
+        this.tap = null
+        let go = this.sceneT > 10 && (pr.start || pr.attack)
+        let pick = this.levelIdx
+        if (pr.left || pr.right || pr.up || pr.down) pick = (pick + (pr.right || pr.up ? 1 : -1) + LEVELS.length) % LEVELS.length
+        if (tap) {
+          // a tap on a pin picks it (a second tap goes); a tap on the card goes
+          const hit = LEVELS.findIndex((lv) => Math.hypot(SPOTS[lv.id].x - tap.x, SPOTS[lv.id].y - 7 - tap.y) < 12)
+          if (hit >= 0) {
+            if (hit === this.levelIdx) go = true
+            pick = hit
+          } else if (tap.x > 274) go = true
+        }
+        if (pick !== this.levelIdx) {
+          this.levelIdx = pick
           this.stage?.reset?.()
           audio.mode = this.level.music
           audio.swing()
         }
-        if (this.sceneT > 10 && (pr.start || pr.attack)) {
+        // the hero on the map walks to the chosen pin
+        const w = this.mapWalker
+        const s = SPOTS[this.level.id]
+        w.tx = s.x
+        w.ty = s.y
+        const dx = w.tx - w.x
+        const dy = w.ty - w.y
+        const d = Math.hypot(dx, dy)
+        if (d > 0.5) {
+          const v = Math.min(d, 1.4)
+          w.x += (dx / d) * v
+          w.y += (dy / d) * v
+          if (Math.abs(dx) > 0.5) w.facing = dx > 0 ? 1 : -1
+        }
+        if (go) {
           if (this.levelIdx < unlockedCount()) {
             audio.pickup()
             this.setScene('select')
@@ -363,6 +421,10 @@ export class Game {
     if (this.galleryT > 0) this.galleryT--
     if (this.freeze > 0) {
       this.freeze--
+      return
+    }
+    if (this.trans) {
+      this.updateTransition()
       return
     }
     const p = this.player
@@ -493,7 +555,7 @@ export class Game {
     this.props = this.props.filter((b) => !gone(b))
     this.enemies = this.enemies.filter((e) => !e.remove)
     this.fx.update()
-    this.updateCamera()
+    if (!this.stage!.inSide) this.updateCamera()
     audio.closeness = this.stage!.closeness(p.x)
     this.ghostHp += (p.hp / p.maxHp - this.ghostHp) * 0.04
     if (this.lastFoeT > 0) this.lastFoeT--
@@ -505,7 +567,7 @@ export class Game {
     }
     // the level ends when the hero walks through the exit door
     const ex = this.stage!.exit
-    if (this.exitOpen && !this.exitT && p.z === 0 && (p.state === 'idle' || p.state === 'walk') && Math.abs(p.x - ex.x) < 16 && p.y < band.top + 12) {
+    if (this.exitOpen && !this.exitT && !this.stage!.inSide && p.z === 0 && (p.state === 'idle' || p.state === 'walk') && Math.abs(p.x - ex.x) < 16 && p.y < band.top + 12) {
       this.exitT = 1
       audio.pickup()
     }
@@ -521,10 +583,62 @@ export class Game {
       }
     }
     for (const b of this.bystanders) if (b.flinch > 0) b.flinch--
+    // the side room's door: in from the street between fights, out once the room is won
+    const side = this.stage!.side
+    const atDoor = (x: number) => p.z === 0 && (p.state === 'idle' || p.state === 'walk') && Math.abs(p.x - x) < 16 && p.y < band.top + 12
+    if (side && !this.exitT) {
+      if (!this.stage!.inSide && this.sideState === 'none' && !this.waveActive && !this.enemies.length && atDoor(side.door)) this.trans = { t: 0, to: 'side' }
+      else if (this.stage!.inSide && this.sideState === 'clear' && atDoor(this.camX + side.doorScreenX)) this.trans = { t: 0, to: 'street' }
+    }
+  }
+
+  /** the circle wipe: closes on the hero, swaps street and side room, opens again */
+  private updateTransition() {
+    const tr = this.trans!
+    tr.t++
+    if (tr.t === 1) audio.pickup()
+    if (tr.t === 22) {
+      const st = this.stage!
+      const side = st.side!
+      const p = this.player
+      if (tr.to === 'side') {
+        st.inSide = true
+        ;[band.top, band.bot] = side.band
+        this.outside = { props: this.props, bystanders: this.bystanders, pickups: this.fx.pickups }
+        this.props = makeBreakables((this.level.sideProps ?? []).map(([k, x, y]) => [k, this.camX + x, y]))
+        this.bystanders = []
+        this.fx.pickups = []
+        p.x = this.camX + side.doorScreenX + 24
+        p.y = band.top + 8
+        p.facing = 1
+        this.sideState = 'fight'
+        this.waveActive = true
+        this.waveT = 0
+        this.pending = this.level.sideWave ? rollSpawns(this.level.sideWave) : []
+        audio.mode = 'cafe'
+      } else {
+        st.inSide = false
+        ;[band.top, band.bot] = st.band
+        if (this.outside) {
+          this.props = this.outside.props
+          this.bystanders = this.outside.bystanders
+          this.fx.pickups = this.outside.pickups
+        }
+        p.x = side.door
+        p.y = band.top + 6
+        this.sideState = 'done'
+        audio.mode = this.level.music
+      }
+      this.fx.debris = []
+      this.projectiles = []
+      setState(p, 'idle')
+    }
+    if (tr.t >= 44) this.trans = null
   }
 
   private updateWaves() {
     if (!this.waveActive) {
+      if (this.stage!.inSide) return
       const w = this.waves[this.waveIdx]
       if (w && this.camX >= w.cam - 0.5) {
         this.camX = w.cam
@@ -539,6 +653,15 @@ export class Game {
     if (this.stage!.ready()) this.waveT++
     for (const s of this.pending.filter((s) => s.delay <= this.waveT)) this.spawn(s)
     this.pending = this.pending.filter((s) => s.delay > this.waveT)
+    if (!this.pending.length && this.enemies.every((e) => e.state === 'dead') && this.sideState === 'fight') {
+      // the side room is won: a treat and a bonus, and the door out opens
+      this.waveActive = false
+      this.sideState = 'clear'
+      this.player.score += 1000
+      this.fx.popup(this.player.x, this.player.y - 100, `${this.stage!.side!.label} FREI! +1000`, '#ffe14a')
+      this.fx.drop('flatwhite', this.camX + VIEW_W / 2, band.top + 20)
+      return
+    }
     if (!this.pending.length && this.enemies.every((e) => e.state === 'dead')) {
       // the train leaves after a station fight, except at the last one: that is where the hero gets off
       if (this.waves[this.waveIdx].station && this.waveIdx < this.waves.length - 1) this.stage!.depart?.()
@@ -972,18 +1095,16 @@ export class Game {
         const boss = this.enemies.find((e) => e.isBoss) ?? null
         drawHud(ctx, this.player, this.lastFoeT > 0 ? this.lastFoe : null, boss, this.tick, this.ghostHp)
         if (this.scene === 'play') drawCombo(ctx, this.comboHits, this.comboT)
-        if (this.scene === 'play' && !this.waveActive && this.waveIdx > 0 && this.waveIdx < this.waves.length) drawGo(ctx, this.tick)
-        // the way out: a bouncing arrow over the exit door
-        if (this.scene === 'play' && this.exitOpen && !this.exitT && Math.floor(this.tick / 15) % 3 !== 2) {
-          const ex = this.stage.exit
-          const x = Math.round(ex.x - this.camX)
-          const y = band.top - 64 + Math.round(Math.sin(this.tick / 6) * 3)
-          ctx.fillStyle = '#14101c'
-          ctx.fillRect(x - 7, y - 1, 15, 9)
-          ctx.fillStyle = '#7dff5a'
-          for (let i = 0; i < 6; i++) ctx.fillRect(x - 6 + i, y + i, 13 - 2 * i, 1)
-          drawText(ctx, ex.label, x, y - 12, { align: 'center', color: '#7dff5a', outline: '#14101c' })
+        const inSide = !!this.stage.inSide
+        if (this.scene === 'play' && !inSide && !this.waveActive && this.waveIdx > 0 && this.waveIdx < this.waves.length) drawGo(ctx, this.tick)
+        // doors to walk through: the exit, the side room's door from the street, the way back out
+        if (this.scene === 'play' && !this.exitT && !this.trans) {
+          const side = this.stage.side
+          if (this.exitOpen && !inSide) this.drawDoorArrow(ctx, this.stage.exit.x - this.camX, this.stage.exit.label, '#7dff5a')
+          if (side && !inSide && this.sideState === 'none' && !this.waveActive) this.drawDoorArrow(ctx, side.door - this.camX, `${side.label}?`, '#ffe14a')
+          if (side && inSide && this.sideState === 'clear') this.drawDoorArrow(ctx, side.doorScreenX, 'RAUS', '#7dff5a')
         }
+        if (this.trans) this.drawWipe(ctx, this.trans.t)
         if (this.scene === 'play' && t < 150 && this.waveIdx === 0)
           drawBanner(ctx, [{ text: `LEVEL ${this.levelIdx + 1}`, scale: 2, color: '#ffe14a' }, { text: this.level.name, scale: 3, color: '#ffffff' }], 70)
         if (this.scene === 'paused') {
@@ -1012,40 +1133,98 @@ export class Game {
     }
   }
 
+  /** a bouncing arrow and a label over a door the hero can walk through */
+  private drawDoorArrow(ctx: CanvasRenderingContext2D, sx: number, label: string, color: string) {
+    if (sx < -10 || sx > VIEW_W + 10 || Math.floor(this.tick / 15) % 3 === 2) return
+    const x = Math.round(sx)
+    const y = band.top - 64 + Math.round(Math.sin(this.tick / 6) * 3)
+    ctx.fillStyle = '#14101c'
+    ctx.fillRect(x - 7, y - 1, 15, 9)
+    ctx.fillStyle = color
+    for (let i = 0; i < 6; i++) ctx.fillRect(x - 6 + i, y + i, 13 - 2 * i, 1)
+    drawText(ctx, label, x, y - 12, { align: 'center', color, outline: '#14101c' })
+  }
+
+  /** the circle wipe around the hero (closing until frame 22, then opening) */
+  private drawWipe(ctx: CanvasRenderingContext2D, t: number) {
+    const k = t < 22 ? 1 - t / 22 : (t - 22) / 22
+    const r = Math.max(0, 300 * k * k)
+    const x = this.player.x - this.camX
+    const y = this.player.y - 40
+    ctx.save()
+    ctx.fillStyle = '#06040e'
+    ctx.beginPath()
+    ctx.rect(0, 0, VIEW_W, VIEW_H)
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fill('evenodd')
+    ctx.restore()
+  }
+
   /** LEVEL SELECT: one card per level, a picture, the name, and a lock on levels not reached yet */
   private drawLevels(ctx: CanvasRenderingContext2D, t: number) {
-    dim(ctx, 0.6)
-    drawText(ctx, 'CHOOSE YOUR NIGHT', VIEW_W >> 1, 10, { scale: 2, align: 'center', color: '#ffe14a', outline: '#14101c', shadow: '#14101c' })
+    drawBerlinMap(ctx, t)
+    drawText(ctx, 'CHOOSE YOUR NIGHT', VIEW_W >> 1, 6, { scale: 2, align: 'center', color: '#ffe14a', outline: '#14101c', shadow: '#14101c' })
     const open = unlockedCount()
-    const cw = 150
-    const ch = 84
-    const gap = 16
-    const x0 = Math.round((VIEW_W - LEVELS.length * cw - (LEVELS.length - 1) * gap) / 2)
+    // the night's route, pin to pin
+    ctx.setLineDash([2, 3])
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'
+    ctx.beginPath()
     LEVELS.forEach((lv, i) => {
-      const x = x0 + i * (cw + gap)
-      const y = 42
-      const on = i === this.levelIdx
-      const locked = i >= open
-      const bob = on ? Math.round(Math.sin(t / 10)) : 0
-      ctx.fillStyle = on ? '#ffe14a' : '#14101c'
-      ctx.fillRect(x - 2, y - 2 + bob, cw + 4, ch + 4)
-      ctx.save()
-      ctx.beginPath()
-      ctx.rect(x, y + bob, cw, ch)
-      ctx.clip()
-      this.stages[i]?.drawPreview(ctx, x, y + bob, cw, ch)
-      if (!on || locked) {
-        ctx.fillStyle = locked ? 'rgba(10,8,20,0.75)' : 'rgba(10,8,20,0.35)'
-        ctx.fillRect(x, y + bob, cw, ch)
-      }
-      ctx.restore()
-      if (locked) drawText(ctx, 'LOCKED', x + cw / 2, y + ch / 2 - 3 + bob, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
-      drawText(ctx, `LEVEL ${i + 1}`, x + cw / 2, y + ch + 10, { align: 'center', color: on ? '#ffe14a' : '#9aa2c4', outline: '#14101c' })
-      drawText(ctx, lv.name, x + cw / 2, y + ch + 22, { align: 'center', color: on ? '#ffffff' : '#9aa2c4', outline: '#14101c' })
-      drawText(ctx, lv.when, x + cw / 2, y + ch + 34, { align: 'center', color: '#5af0ff', outline: '#14101c' })
+      const s = SPOTS[lv.id]
+      if (i) ctx.lineTo(s.x, s.y - 4)
+      else ctx.moveTo(s.x, s.y - 4)
     })
-    if (Math.floor(t / 25) % 2 === 0)
-      drawText(ctx, this.cb.touch ? '< >  CHOOSE     HIT  GO' : '< >  CHOOSE     ENTER / X  GO     ESC  BACK', VIEW_W >> 1, 200, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
+    ctx.stroke()
+    ctx.setLineDash([])
+    LEVELS.forEach((lv, i) => {
+      const s = SPOTS[lv.id]
+      drawPin(ctx, s.x, s.y, i + 1, s.color, i === this.levelIdx, i >= open, t)
+    })
+    // the hero walks from pin to pin
+    const h = HEROES[this.heroId]
+    const w = this.mapWalker
+    const moving = Math.hypot(w.tx - w.x, w.ty - w.y) > 0.5
+    const walk = h.anim.walk ?? h.anim.idle
+    const fr = moving ? walk[Math.floor(t / 6) % walk.length] : h.anim.idle[Math.floor(t / h.anim.idleRate) % h.anim.idle.length]
+    drawFrame(ctx, sheet(h.sheet), fr, w.x - 15, w.y - 2, w.facing, { scale: 0.34 })
+
+    // the card of the chosen level
+    const lv = this.level
+    const spot = SPOTS[lv.id]
+    const locked = this.levelIdx >= open
+    const cx = 278
+    const cy = 34
+    const cw = 100
+    ctx.fillStyle = spot.color
+    ctx.fillRect(cx - 2, cy - 2, cw + 4, 160)
+    ctx.fillStyle = '#14101c'
+    ctx.fillRect(cx, cy, cw, 156)
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(cx + 2, cy + 2, cw - 4, 56)
+    ctx.clip()
+    this.stage?.drawPreview(ctx, cx + 2, cy + 2, cw - 4, 56)
+    if (locked) {
+      ctx.fillStyle = 'rgba(10,8,20,0.75)'
+      ctx.fillRect(cx + 2, cy + 2, cw - 4, 56)
+    }
+    ctx.restore()
+    let y = cy + 64
+    drawText(ctx, `LEVEL ${this.levelIdx + 1}`, cx + cw / 2, y, { align: 'center', color: spot.color, outline: '#14101c' })
+    y += 12
+    for (const line of wrap(locked ? '???' : lv.name, 15)) {
+      drawText(ctx, line, cx + cw / 2, y, { align: 'center', color: '#ffffff', outline: '#14101c' })
+      y += 10
+    }
+    y += 2
+    for (const line of wrap(spot.area, 15)) {
+      drawText(ctx, line, cx + cw / 2, y, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
+      y += 10
+    }
+    drawText(ctx, lv.when, cx + cw / 2, y + 2, { align: 'center', color: '#5af0ff', outline: '#14101c' })
+    if (locked) drawText(ctx, 'LOCKED', cx + cw / 2, cy + 26, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
+    else if (Math.floor(t / 20) % 2 === 0) drawText(ctx, this.cb.touch ? 'TAP: GO!' : 'ENTER: GO!', cx + cw / 2, cy + 142, { align: 'center', color: '#ffe14a', outline: '#14101c' })
+    drawText(ctx, this.cb.touch ? 'TAP A PIN OR < >' : '< > OR CLICK A PIN     ESC  BACK', 140, 206, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
   }
 
   /** CONTROLS page of the main menu */
@@ -1172,4 +1351,15 @@ export class Game {
     // frozen by a ticket inspector: a blinking "?!" and a hint to mash
     if (p && p.frozenT > 0 && Math.floor(this.tick / 6) % 2 === 0) drawText(ctx, '?!', p.x - cam, p.y - 104, { align: 'center', color: '#ff7a7a', outline: '#14101c' })
   }
+}
+
+/** splits a name into lines of at most `n` characters, at spaces */
+function wrap(text: string, n: number): string[] {
+  const lines: string[] = []
+  for (const word of text.split(' ')) {
+    const last = lines[lines.length - 1]
+    if (last !== undefined && last.length + 1 + word.length <= n) lines[lines.length - 1] = `${last} ${word}`
+    else lines.push(word)
+  }
+  return lines
 }

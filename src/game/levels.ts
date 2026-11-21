@@ -4,6 +4,8 @@ import { VIEW_W } from './constants'
 import type { PickupKind } from './effects'
 import type { EnemyKind } from './enemy'
 import type { BreakableKind } from './props'
+import prenzl from '../assets/bg/prenzl/prenzl.json'
+import { PrenzlStage } from './prenzl'
 import { BerghainStage, OPEN, type Stage } from './stage'
 import { UbahnStage } from './ubahn'
 
@@ -40,7 +42,7 @@ export interface WaveDef {
 }
 
 export interface LevelDef {
-  id: 'berghain' | 'ubahn'
+  id: 'berghain' | 'ubahn' | 'prenzl'
   name: string
   /** day and time, shown on the level card */
   when: string
@@ -51,7 +53,10 @@ export interface LevelDef {
   loot: PickupKind[]
   win: [string, string]
   lose: [string, string]
-  music: 'club' | 'train'
+  music: 'club' | 'train' | 'street'
+  /** the fight inside the side room (the cafe), and the furniture there: [kind, screen x, feet y] */
+  sideWave?: WaveDef
+  sideProps?: [BreakableKind, number, number][]
   /** chance that a knocked-out enemy drops something */
   dropChance: number
   /** people standing in the way who never fight: hitting them costs points */
@@ -149,6 +154,50 @@ export const LEVELS: LevelDef[] = [
     ],
   },
 ]
+
+const L3 = prenzl.levelLen
+const CAFE = prenzl.cafeDoor
+
+LEVELS.push({
+  id: 'prenzl',
+  name: 'LATTE ART ATTACK',
+  when: 'SUNDAY 11:00',
+  makeStage: () => new PrenzlStage(),
+  music: 'street',
+  win: ['MIETE', 'GEDECKELT!'],
+  lose: ['LEIDER SCHON', 'VERMIETET.'],
+  loot: ['franzbroetchen', 'avotoast', 'carrotcake', 'oatmilk', 'mug', 'sourdough'],
+  dropChance: 0.35,
+  bystanders: { sheet: 'extras_prenzl', looks: ['1', '2', '4', '5', '6', '7'], count: 4 },
+  props: [
+    ['veg', 200, 186],
+    ['bin', 470, 170],
+    ['plant', 760, 198],
+    ['veg', 1010, 176],
+    ['bin', 1350, 196],
+    ['plant', 1690, 174],
+    ['cone', 2150, 190],
+    ['bin', 2420, 176],
+  ],
+  // for now the street is fought by level 1's crowd: the Prenzlauer Berg enemies come later
+  waves: [
+    { cam: 0, count: [2, 3], pool: ['mullet', 'tourist', 'monk'], from: ['right', 'right', 'left'] },
+    { cam: 420, jitter: 40, count: [3, 4], pool: ['mullet', 'tourist', 'queen', 'punkgirl'], from: ['right', 'left'] },
+    { cam: 820, count: [1, 2], pool: ['tourist', 'mullet'], from: ['left', 'right'], chance: 0.4 },
+    { cam: 1100, jitter: 40, count: [3, 5], pool: ['harness', 'mullet', 'queen', 'monk', 'tourist'], from: ['right', 'left'] },
+    { cam: 1980, jitter: 30, count: [4, 5], pool: ['harness', 'queen', 'punkgirl', 'mullet', 'tourist', 'monk'], from: ['right', 'left'] },
+    { cam: L3 - VIEW_W, count: [4, 6], pool: ['harness', 'harness', 'queen', 'mullet', 'punkgirl', 'monk'], from: ['right', 'left'] },
+  ],
+  // the cafe: optional, guests storm in through the door and from the kitchen; the furniture hides the treats
+  sideWave: { cam: CAFE, count: [3, 4], pool: ['mullet', 'tourist', 'queen', 'monk'], from: ['door', 'door', 'right'] },
+  sideProps: [
+    ['chair', 90, 178],
+    ['table', 150, 196],
+    ['plant', 236, 172],
+    ['chair', 300, 200],
+    ['table', 340, 182],
+  ],
+})
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a)
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)]

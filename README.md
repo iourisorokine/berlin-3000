@@ -1,6 +1,6 @@
 # Berlin 3000
 
-A side-scrolling beat 'em up through a Berlin night (the queue outside a techno club, the last U-Bahn), inspired by
+A side-scrolling beat 'em up through a Berlin weekend (the queue outside a techno club, the last U-Bahn, Sunday brunch in Prenzlauer Berg), inspired by
 Marseille 3000. React + TypeScript + Canvas, built with Vite (same setup as Office Fighter).
 
 ## Run it
@@ -64,6 +64,8 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | `src/game/Game.ts` | wave flow, camera, hit resolution, enemy tricks, scenes (title, level select, fighter select, play) |
 | `src/game/stage.ts` | the `Stage` interface and level 1, QUEUE TO BERGHAIN (skyline, club, queue, barriers) |
 | `src/game/ubahn.ts` | level 2, LETZTE BAHN: the moving train, tunnel/station behind the windows, station stops |
+| `src/game/prenzl.ts` | level 3, LATTE ART ATTACK: the Prenzlauer Berg street and the design cafe (a side room) |
+| `src/game/map.ts` | the level-select map of Berlin: pins where the levels happen |
 | `src/game/props.ts` | breakable props of every level and what falls out of them |
 | `src/game/sprites.ts` | atlas loading and drawing |
 | `src/game/audio.ts` | synthesised club kick through the wall, the train, and every sound effect |
@@ -75,6 +77,10 @@ how many enemies (a range), which kinds can come (a pool) and from where (screen
 the club door, a train door). Every run rolls them again, shifts some fights a little and rolls
 optional surprise fights in or out. Levels open one by one once the previous one is beaten
 (`UNLOCK_ALL` is on for now, so every level is open).
+
+A level can have a side room (the cafe in Prenzlauer Berg): an optional fight behind a door in the
+street, with its own floor, furniture and a reward. Prenzlauer Berg's art is built by
+`python3 tools/import_prenzl.py`.
 
 The U-Bahn's art is built by `python3 tools/import_ubahn.py`: the carriage segments with their
 windows cut out, the door section closed and open, the tunnel and the station behind the windows.

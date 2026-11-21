@@ -2,7 +2,7 @@ import type { PickupKind } from './effects'
 import { drawFrame, sheet, type SheetKey } from './sprites'
 
 /** Objects in the walkable band that break when hit, and drop things. */
-export type BreakableKind = 'bin' | 'boxes' | 'crate' | 'cone' | 'suitcase' | 'bag' | 'speaker' | 'papers'
+export type BreakableKind = 'bin' | 'boxes' | 'crate' | 'cone' | 'suitcase' | 'bag' | 'speaker' | 'papers' | 'chair' | 'table' | 'plant' | 'veg'
 
 /** each kind: its sprite sheet, how many hits it takes, what falls out */
 const DEFS: Record<BreakableKind, { sheet: SheetKey; hp: number; loot: PickupKind[] }> = {
@@ -15,6 +15,11 @@ const DEFS: Record<BreakableKind, { sheet: SheetKey; hp: number; loot: PickupKin
   bag: { sheet: 'props_ubahn', hp: 1, loot: ['gnome', 'umbrella', 'falafel', 'pizzabox'] },
   speaker: { sheet: 'props_ubahn', hp: 2, loot: ['coffee', 'gummies', 'falafel'] },
   papers: { sheet: 'props_ubahn', hp: 1, loot: ['ticket', 'gummies', 'keys', 'ticket'] },
+  // Prenzlauer Berg: the cafe's furniture and the organic shops' crates
+  chair: { sheet: 'props_prenzl', hp: 1, loot: ['mug', 'franzbroetchen'] },
+  table: { sheet: 'props_prenzl', hp: 1, loot: ['flatwhite', 'carrotcake', 'glasscase'] },
+  plant: { sheet: 'props_prenzl', hp: 2, loot: ['goldkey', 'record', 'avotoast'] },
+  veg: { sheet: 'props_prenzl', hp: 1, loot: ['avotoast', 'pumpkin', 'sourdough', 'franzbroetchen'] },
 }
 
 export interface Breakable {

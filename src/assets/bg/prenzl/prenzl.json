@@ -1,0 +1,37 @@
+{
+ "levelLen": 2712,
+ "open": 256,
+ "wallBase": 136,
+ "segments": [
+  {
+   "name": "seg_a",
+   "x": 256,
+   "w": 614
+  },
+  {
+   "name": "seg_b",
+   "x": 870,
+   "w": 614
+  },
+  {
+   "name": "seg_c",
+   "x": 1484,
+   "w": 614
+  },
+  {
+   "name": "seg_d",
+   "x": 2098,
+   "w": 614
+  }
+ ],
+ "cafeDoor": 1792,
+ "exitDoor": 2678,
+ "cafe": {
+  "wallBase": 154,
+  "band": [
+   164,
+   208
+  ],
+  "door": 30
+ }
+}
