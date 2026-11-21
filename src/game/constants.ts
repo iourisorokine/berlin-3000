@@ -20,6 +20,8 @@ export const BARRIER_Y = 146
 /** The walkable band: feet can be anywhere between these two lines. */
 export const GROUND_TOP = 152
 export const GROUND_BOT = 208
+/** The walkable band of the level being played (the U-Bahn aisle is narrower than the street). */
+export const band = { top: GROUND_TOP, bot: GROUND_BOT }
 
 // ---------- physics ----------
 /** Pulled down this much per frame while airborne (art px / frame²). */

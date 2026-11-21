@@ -1,4 +1,4 @@
-import { GROUND_BOT, GROUND_TOP, SIZE } from './constants'
+import { band, SIZE } from './constants'
 import { makeFighter, moveLength, scaleReach, setState, startMove, type AnimSet, type Fighter, type Move, type MoveFrame } from './fighter'
 import type { SheetKey } from './sprites'
 
@@ -160,7 +160,7 @@ export const ENEMY_TYPES = {
     speed: 0.6,
     power: 1,
     // both charge with the sofa: a long ram that knocks you flat
-    moves: [raverAttack('ram', 22, 46, 13, { knockback: 3.6, knockdown: true, heavy: true, lunge: 2.4, say: 'HAU RUCK!', fx: 'thump' })],
+    moves: [raverAttack('ram', 22, 46, 13, { knockback: 3.6, knockdown: true, heavy: true, lunge: 2.4, say: 'HAU RUCK!', fx: 'sofa' })],
     score: 260,
   },
   busker: {
@@ -248,7 +248,7 @@ export function makeEnemy(kind: EnemyKind, x: number, y: number, fromQueue: bool
   e.isBoss = kind === 'bouncer'
   e.slot = 0
   e.whiff = false
-  e.enterTo = GROUND_TOP + 4 + Math.random() * 14
+  e.enterTo = band.top + 4 + Math.random() * 14
   if (fromQueue) setState(e, 'enter')
   return e
 }
@@ -290,7 +290,7 @@ export function updateEnemy(e: Enemy, target: Fighter) {
     } else {
       // wait around at a distance, drifting in depth
       e.goalX = target.x + side * rand(60, 95) * SIZE
-      e.goalY = rand(GROUND_TOP + 2, GROUND_BOT - 2)
+      e.goalY = rand(band.top + 2, band.bot - 2)
     }
   }
   const dx = e.goalX - e.x

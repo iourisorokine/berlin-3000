@@ -457,3 +457,7 @@ export const HEROES: Record<HeroId, HeroDef> = {
 }
 
 for (const h of Object.values(HEROES)) scaleReach([...h.combo, h.air, h.dash, h.special], SIZE)
+
+/** Specials take this much longer to charge (both the timer and the boost from landing hits). */
+export const SPECIAL_SLOWDOWN = 1.3
+for (const h of Object.values(HEROES)) h.specialCooldown = Math.round(h.specialCooldown * SPECIAL_SLOWDOWN)

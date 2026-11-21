@@ -1,8 +1,6 @@
 import { audio } from './audio'
 import {
-  DROP_CHANCE,
-  GROUND_BOT,
-  GROUND_TOP,
+  band,
   HITSTOP,
   HITSTOP_HEAVY,
   MAX_ATTACKERS,
@@ -18,7 +16,7 @@ import { dim, drawBanner, drawCombo, drawGo, drawHud } from './hud'
 import { Input } from './input'
 import { drawLogo } from './logo'
 import { FixedLoop } from './loop'
-import { HERO_ORDER, HEROES, type HeroId } from './heroes'
+import { HERO_ORDER, HEROES, SPECIAL_SLOWDOWN, type HeroId } from './heroes'
 import { LEVELS, rollSpawns, rollWaves, unlockedCount, unlockNext, type Spawn, type WaveDef } from './levels'
 import { makePlayer, updatePlayer, type Player } from './player'
 import { drawBreakable, gone, LOOT, makeBreakables, standing, updateBreakable, type Breakable } from './props'
@@ -51,6 +49,19 @@ const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolea
 }
 
 export type Scene = 'loading' | 'title' | 'levels' | 'select' | 'play' | 'paused' | 'gameover' | 'win'
+
+/** someone standing in the way who never fights: hitting them costs points */
+interface Bystander {
+  id: number
+  x: number
+  y: number
+  look: string
+  flip: boolean
+  flinch: number
+  phase: number
+}
+
+const BYSTANDER_LINES = ['HEY!', 'AUA!', 'SPINNST DU?!', 'ALTER!', 'NICHT MICH!']
 
 /** a thrown record: spins, flies straight and slices through everyone in its path */
 interface Projectile {
@@ -116,6 +127,11 @@ export class Game {
   private comboHits = 0
   private comboT = 0
   private projectiles: Projectile[] = []
+  private bystanders: Bystander[] = []
+  /** the level's fights are won: the hero now walks to the exit door */
+  private exitOpen = false
+  /** frames since the hero started walking through the exit door (0 = not yet) */
+  private exitT = 0
   /** highlighted entry of the menu on screen (title, pause, game over, win) */
   private menuIdx = 0
   /** the CONTROLS page of the main menu is open */
@@ -213,6 +229,26 @@ export class Game {
     this.waves = rollWaves(this.level.waves)
     this.stage?.reset?.()
     audio.mode = this.level.music
+    if (this.stage) [band.top, band.bot] = this.stage.band
+    this.player.y = Math.max(band.top + 10, this.player.y)
+    this.exitOpen = false
+    this.exitT = 0
+    // bystanders spread over the level, never at the very start
+    const bs = this.level.bystanders
+    this.bystanders = []
+    if (bs && this.stage)
+      for (let i = 0; i < bs.count; i++) {
+        const span = (this.stage.len - 420) / bs.count
+        this.bystanders.push({
+          id: 9000 + i,
+          x: Math.round(300 + span * (i + 0.2 + Math.random() * 0.6)),
+          y: Math.round(band.top + 6 + Math.random() * (band.bot - band.top - 14)),
+          look: bs.looks[Math.floor(Math.random() * bs.looks.length)],
+          flip: Math.random() < 0.5,
+          flinch: 0,
+          phase: Math.floor(Math.random() * 60),
+        })
+      }
     this.camX = 0
     this.waveIdx = 0
     this.waveActive = false
@@ -413,6 +449,9 @@ export class Game {
     for (const e of this.enemies) {
       updateEnemy(e, p)
       if (e.state === 'attack' && e.move) this.enemyTrick(e, e.move)
+      // the buskers never stop busking while they are on screen
+      if (e.kind === 'busker' && (e.state === 'idle' || e.state === 'walk') && (this.tick + e.id * 37) % 260 === 0 && Math.abs(e.x - this.camX - VIEW_W / 2) < VIEW_W / 2)
+        audio.riff(0.45)
     }
 
     for (const f of [p as Fighter, ...this.enemies]) {
@@ -427,7 +466,7 @@ export class Game {
         p.move = null
       }
       // keep everyone in the walkable band (except while stepping out of the queue)
-      if (f.state !== 'enter') f.y = Math.max(GROUND_TOP, Math.min(GROUND_BOT, f.y))
+      if (f.state !== 'enter' && !(f.isPlayer && this.exitT)) f.y = Math.max(band.top, Math.min(band.bot, f.y))
       f.x = Math.max(8, Math.min(this.stage!.len - 8, f.x))
     }
     p.x = Math.max(this.camX + 10, Math.min(this.camX + VIEW_W - 10, p.x))
@@ -439,8 +478,8 @@ export class Game {
         const b = solid[j]
         if (Math.abs(a.x - b.x) < 18 && Math.abs(a.y - b.y) < 7) {
           const s = a.y <= b.y ? -1 : 1
-          a.y = Math.max(GROUND_TOP, Math.min(GROUND_BOT, a.y + s * 0.6))
-          b.y = Math.max(GROUND_TOP, Math.min(GROUND_BOT, b.y - s * 0.6))
+          a.y = Math.max(band.top, Math.min(band.bot, a.y + s * 0.6))
+          b.y = Math.max(band.top, Math.min(band.bot, b.y - s * 0.6))
           a.x += a.x <= b.x ? -0.3 : 0.3
           b.x += a.x <= b.x ? 0.3 : -0.3
         }
@@ -460,13 +499,28 @@ export class Game {
     if (this.lastFoeT > 0) this.lastFoeT--
 
     if (p.state === 'dead' && p.t > 90) this.setScene('gameover')
-    if (this.cleared && this.sceneT > 0 && !this.enemies.length) {
-      if (this.waveIdx >= this.waves.length) {
+    if (this.cleared && !this.exitOpen && !this.enemies.length && this.waveIdx >= this.waves.length) {
+      this.exitOpen = true
+      this.fx.popup(p.x, p.y - 100, this.stage!.exit.label, '#7dff5a')
+    }
+    // the level ends when the hero walks through the exit door
+    const ex = this.stage!.exit
+    if (this.exitOpen && !this.exitT && p.z === 0 && (p.state === 'idle' || p.state === 'walk') && Math.abs(p.x - ex.x) < 16 && p.y < band.top + 12) {
+      this.exitT = 1
+      audio.pickup()
+    }
+    if (this.exitT) {
+      this.exitT++
+      p.x += (ex.x - p.x) * 0.2
+      p.y -= 0.45
+      setState(p, 'walk')
+      if (this.exitT > 50) {
         setState(p, 'victory')
         unlockNext(this.levelIdx)
         this.setScene('win')
       }
     }
+    for (const b of this.bystanders) if (b.flinch > 0) b.flinch--
   }
 
   private updateWaves() {
@@ -486,7 +540,8 @@ export class Game {
     for (const s of this.pending.filter((s) => s.delay <= this.waveT)) this.spawn(s)
     this.pending = this.pending.filter((s) => s.delay > this.waveT)
     if (!this.pending.length && this.enemies.every((e) => e.state === 'dead')) {
-      if (this.waves[this.waveIdx].station) this.stage!.depart?.()
+      // the train leaves after a station fight, except at the last one: that is where the hero gets off
+      if (this.waves[this.waveIdx].station && this.waveIdx < this.waves.length - 1) this.stage!.depart?.()
       this.waveActive = false
       this.waveIdx++
       if (this.waveIdx >= this.waves.length) this.cleared = true
@@ -500,7 +555,7 @@ export class Game {
       const alt: EnemyKind[] = ['punkgirl', 'monk', 'mullet']
       s = { ...s, kind: alt[this.enemies.length % alt.length] }
     }
-    const y = GROUND_TOP + 6 + Math.random() * (GROUND_BOT - GROUND_TOP - 12)
+    const y = band.top + 6 + Math.random() * (band.bot - band.top - 12)
     // out of the queue, the club door or a train door; from a screen edge if the stage has no such place
     const at = s.from === 'left' || s.from === 'right' ? null : this.stage!.spawnPoint(s.from, this.camX)
     const fromRight = s.from === 'right' || (!at && Math.random() < 0.6)
@@ -521,6 +576,19 @@ export class Game {
         p.hitList.add(e.id)
         p.connected = true
         this.hit(p, e)
+      }
+    }
+    // bystanders: they don't fight back, they just cost you
+    if (pAttacking) {
+      for (const b of this.bystanders) {
+        if (p.hitList.has(b.id) || !inReach(p, { x: b.x, y: b.y, z: 0 } as Fighter, p.move!)) continue
+        p.hitList.add(b.id)
+        b.flinch = 16
+        p.score = Math.max(0, p.score - 100)
+        audio.pop()
+        this.shake = Math.max(this.shake, 2)
+        this.fx.popup(b.x, b.y - 92, BYSTANDER_LINES[Math.floor(Math.random() * BYSTANDER_LINES.length)], '#ffffff')
+        this.fx.popup(b.x, b.y - 30, '-100', '#ff7a7a')
       }
     }
     // street props
@@ -585,13 +653,13 @@ export class Game {
       this.lastFoeT = 180
       this.countHit()
       // every hit you land charges the special
-      this.player.specialCd = Math.max(0, this.player.specialCd - move.damage * 5)
+      this.player.specialCd = Math.max(0, this.player.specialCd - (move.damage * 5) / SPECIAL_SLOWDOWN)
       this.player.score += Math.round(move.damage * 10 * this.multiplier())
       if (e.hp <= 0) {
         const pts = ENEMY_TYPES[e.kind].score
         this.player.score += pts
         this.fx.popup(e.x, e.y - 92, `+${pts}`)
-        if (!e.isBoss && Math.random() < DROP_CHANCE) this.fx.drop(this.level.loot[Math.floor(Math.random() * this.level.loot.length)], e.x, e.y)
+        if (!e.isBoss && Math.random() < this.level.dropChance) this.fx.drop(this.level.loot[Math.floor(Math.random() * this.level.loot.length)], e.x, e.y)
         if (e.isBoss) {
           this.freeze = 30
           this.shake = 20
@@ -619,7 +687,7 @@ export class Game {
         this.lastFoeT = 180
         this.countHit()
         this.player.score += Math.round(pr.damage * 10 * this.multiplier())
-        this.player.specialCd = Math.max(0, this.player.specialCd - pr.damage * 5)
+        this.player.specialCd = Math.max(0, this.player.specialCd - (pr.damage * 5) / SPECIAL_SLOWDOWN)
         if (e.hp <= 0) {
           this.fx.confetti(e.x, e.y, 40)
           this.player.score += ENEMY_TYPES[e.kind].score
@@ -664,7 +732,12 @@ export class Game {
   /** each enemy's signature: a shout on the wind-up, an effect and a sound on the strike */
   private enemyTrick(e: Enemy, m: Move) {
     const p = this.player
-    if (e.t === 1 && m.say) this.fx.popup(e.x, e.y - 106, m.say, '#ffffff')
+    if (e.t === 1 && m.say) {
+      this.fx.popup(e.x, e.y - 106, m.say, '#ffffff')
+      // a voice for the shout: deep for the movers and the inspector, high for the singer's duo
+      const pitch = { couch: 115, inspector: 105, busker: 190, bouncer: 85 }[e.kind as string] ?? 150
+      audio.shout(m.say.split(/[ ,]+/).filter(Boolean).length, pitch)
+    }
     // PROST PAULE: one swing in three goes nowhere
     if (e.t === 1) {
       e.whiff = m.fx === 'stagger' && Math.random() < 0.35
@@ -727,6 +800,12 @@ export class Game {
           audio.whoosh()
         } else audio.swing()
         break
+      case 'sofa':
+        this.shake = Math.max(this.shake, 6)
+        this.fx.dust(front, e.y, true)
+        audio.thud()
+        audio.boing()
+        break
       case 'chord':
         audio.riff()
         this.fx.gust(front, e.y, e.facing)
@@ -784,7 +863,7 @@ export class Game {
     if (this.waveActive) return
     const target = this.player.x - 150
     const next = this.waves[this.waveIdx]
-    const end = this.stage!.len - VIEW_W
+    const end = Math.min(this.stage!.len - VIEW_W, this.cleared ? this.stage!.exit.x - 60 : Infinity)
     const limit = next ? next.cam : end
     // never scrolls back, like the arcade classics
     this.camX = Math.max(this.camX, Math.min(limit, end, this.camX + Math.max(0, (target - this.camX) * 0.12)))
@@ -807,12 +886,44 @@ export class Game {
     const playing = this.scene !== 'title' && this.scene !== 'select' && this.scene !== 'levels'
     const all: Fighter[] = playing ? [this.player, ...this.enemies] : []
     const split = this.stage.split
-    const behind = all.filter((f) => f.y < split).sort((a, b) => a.y - b.y)
-    for (const f of behind) drawFighter(ctx, f, cam)
+    const behind = all.filter((f) => f.y < split && !(f.isPlayer && this.exitT > 50)).sort((a, b) => a.y - b.y)
+    for (const f of behind) {
+      ctx.save()
+      if (f.isPlayer && this.exitT) ctx.globalAlpha = Math.max(0, 1 - this.exitT / 50)
+      drawFighter(ctx, f, cam)
+      ctx.restore()
+    }
     this.stage.drawFront(ctx, cam)
     // fighters and street props share one depth order
-    const front: { y: number; draw: () => void }[] = all.filter((f) => f.y >= split).map((f) => ({ y: f.y, draw: () => this.drawOne(ctx, f, cam) }))
+    const front: { y: number; draw: () => void }[] = all
+      .filter((f) => f.y >= split && !(f.isPlayer && this.exitT > 50))
+      .map((f) => ({
+        y: f.y,
+        draw: () => {
+          // walking through the exit door: the hero fades into the doorway
+          const fade = f.isPlayer && this.exitT ? Math.max(0, 1 - this.exitT / 50) : 1
+          ctx.save()
+          ctx.globalAlpha = fade
+          this.drawOne(ctx, f, cam)
+          ctx.restore()
+        },
+      }))
     if (playing) for (const b of this.props) front.push({ y: b.y, draw: () => drawBreakable(ctx, b, cam) })
+    if (playing) {
+      const bsheet = this.level.bystanders ? sheet(this.level.bystanders.sheet) : null
+      for (const b of this.bystanders)
+        front.push({
+          y: b.y,
+          draw: () => {
+            if (!bsheet) return
+            const shakeX = b.flinch > 0 ? (b.flinch % 4 < 2 ? 2 : -2) : 0
+            ctx.fillStyle = 'rgba(8,6,16,0.35)'
+            ctx.fillRect(Math.round(b.x - cam) - 10, Math.round(b.y), 20, 2)
+            const fr = (b.flinch > 0 ? 'q' : Math.floor((this.tick + b.phase) / 50) % 2 ? 'q' : 'p') + b.look
+            drawFrame(ctx, bsheet, fr, b.x - cam + shakeX, b.y, b.flip ? -1 : 1)
+          },
+        })
+    }
     if (playing)
       for (const pr of this.projectiles)
         front.push({
@@ -862,6 +973,17 @@ export class Game {
         drawHud(ctx, this.player, this.lastFoeT > 0 ? this.lastFoe : null, boss, this.tick, this.ghostHp)
         if (this.scene === 'play') drawCombo(ctx, this.comboHits, this.comboT)
         if (this.scene === 'play' && !this.waveActive && this.waveIdx > 0 && this.waveIdx < this.waves.length) drawGo(ctx, this.tick)
+        // the way out: a bouncing arrow over the exit door
+        if (this.scene === 'play' && this.exitOpen && !this.exitT && Math.floor(this.tick / 15) % 3 !== 2) {
+          const ex = this.stage.exit
+          const x = Math.round(ex.x - this.camX)
+          const y = band.top - 64 + Math.round(Math.sin(this.tick / 6) * 3)
+          ctx.fillStyle = '#14101c'
+          ctx.fillRect(x - 7, y - 1, 15, 9)
+          ctx.fillStyle = '#7dff5a'
+          for (let i = 0; i < 6; i++) ctx.fillRect(x - 6 + i, y + i, 13 - 2 * i, 1)
+          drawText(ctx, ex.label, x, y - 12, { align: 'center', color: '#7dff5a', outline: '#14101c' })
+        }
         if (this.scene === 'play' && t < 150 && this.waveIdx === 0)
           drawBanner(ctx, [{ text: `LEVEL ${this.levelIdx + 1}`, scale: 2, color: '#ffe14a' }, { text: this.level.name, scale: 3, color: '#ffffff' }], 70)
         if (this.scene === 'paused') {

@@ -11,10 +11,10 @@ const DEFS: Record<BreakableKind, { sheet: SheetKey; hp: number; loot: PickupKin
   crate: { sheet: 'props', hp: 1, loot: ['mate', 'mate', 'glowstick'] },
   cone: { sheet: 'props', hp: 1, loot: [] },
   // the night train: things people carry around at 4 a.m.
-  suitcase: { sheet: 'props_ubahn', hp: 2, loot: ['shoe', 'shades', 'wallet', 'skate'] },
+  suitcase: { sheet: 'props_ubahn', hp: 2, loot: ['falafel', 'shoe', 'shades', 'wallet', 'falafel'] },
   bag: { sheet: 'props_ubahn', hp: 1, loot: ['gnome', 'umbrella', 'falafel', 'pizzabox'] },
-  speaker: { sheet: 'props_ubahn', hp: 2, loot: ['coffee', 'gummies', 'coffee'] },
-  papers: { sheet: 'props_ubahn', hp: 1, loot: ['ticket', 'keys', 'ticket'] },
+  speaker: { sheet: 'props_ubahn', hp: 2, loot: ['coffee', 'gummies', 'falafel'] },
+  papers: { sheet: 'props_ubahn', hp: 1, loot: ['ticket', 'gummies', 'keys', 'ticket'] },
 }
 
 export interface Breakable {

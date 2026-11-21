@@ -22,11 +22,13 @@ RAW = ROOT / "raw-assets"
 OUT = ROOT / "src" / "assets" / "bg" / "ubahn"
 
 VIEW_H = 216
-WALL_BASE = 128   # art row where the carriage wall meets the floor
-S = 0.19          # carriage scale: the whole wall, ceiling lights included, fits above the floor
-FLOOR_S = 0.36    # the floor strip is stretched a little more to fill the walkable band
-# the train, left to right: two and a bit carriages, three door sections (= three stations)
-SEGMENTS = ["car_a", "car_b", "car_end", "car_a", "car_b", "car_a", "car_end", "car_b", "car_a"]
+WALL_BASE = 150   # art row where the carriage wall meets the floor: close to the viewer, a narrow aisle
+S = 0.22          # carriage scale: the whole wall, ceiling lights included, fits above the floor
+FLOOR_S = 0.27    # the floor strip fills the rows below the wall
+# the train, left to right: two carriages, two door sections (= two stations, the last one is the exit)
+SEGMENTS = ["car_a", "car_b", "car_end", "car_a", "car_b", "car_a"]
+# where fighters can walk: from just in front of the wall to the bottom of the screen
+BAND = [164, 208]
 OUTLINE = np.array([20, 16, 28])
 
 
@@ -120,6 +122,7 @@ if __name__ == "__main__":
     meta = {
         "levelLen": level_len,
         "wallBase": WALL_BASE,
+        "band": BAND,
         "segW": seg_w,
         "segments": [{"name": n, "x": px, "w": im.width} for n, px, im in segs],
         # centre of the double doors in car_b (image x 865 of 1536)

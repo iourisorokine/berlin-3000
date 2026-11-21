@@ -6,7 +6,7 @@ import tunnelUrl from '../assets/bg/ubahn/tunnel.png'
 import meta from '../assets/bg/ubahn/ubahn.json'
 import { audio } from './audio'
 import { VIEW_H, VIEW_W } from './constants'
-import { sheet } from './sprites'
+import { drawFrame, sheet } from './sprites'
 import type { SpawnPoint, Stage } from './stage'
 
 /**
@@ -59,7 +59,7 @@ function seatPassengers(): Passenger[] {
       }
       continue
     }
-    for (let x = a + 10; x < b - 10; x += 26 + Math.floor(rnd() * 40)) {
+    for (let x = a + 14; x < b - 14; x += 34 + Math.floor(rnd() * 44)) {
       if (rnd() < 0.35) continue // an empty seat
       const i = seated[Math.floor(rnd() * seated.length)]
       out.push({ x, frames: [`p${i}`, `q${i}`], flip: rnd() < 0.25, phase: rnd() * 100, rate: 30 + Math.floor(rnd() * 40) })
@@ -71,6 +71,9 @@ function seatPassengers(): Passenger[] {
 export class UbahnStage implements Stage {
   len = meta.levelLen
   split = 0
+  band = meta.band as [number, number]
+  // the last station: the hero gets off through the open doors
+  exit = { x: meta.doors[meta.doors.length - 1], label: 'AUSSTEIGEN!' }
   private train!: HTMLImageElement
   private doors!: HTMLImageElement
   private closed!: HTMLImageElement
@@ -223,14 +226,8 @@ export class UbahnStage implements Stage {
     const ex = sheet('extras_ubahn')
     for (const p of this.passengers) {
       const sx = p.x - cx
-      if (sx < -30 || sx > VIEW_W + 30) continue
-      const f = ex.frames[p.frames[Math.floor((tick + p.phase) / p.rate) % 2]]
-      if (!f) continue
-      ctx.save()
-      ctx.translate(Math.round(sx), meta.wallBase + rattle)
-      if (p.flip) ctx.scale(-1, 1)
-      ctx.drawImage(ex.img, f.x, f.y, f.w, f.h, -f.ax, -f.ay, f.w, f.h)
-      ctx.restore()
+      if (sx < -40 || sx > VIEW_W + 40) continue
+      drawFrame(ctx, ex, p.frames[Math.floor((tick + p.phase) / p.rate) % 2], sx, meta.wallBase + rattle, p.flip ? -1 : 1)
     }
     // the fluorescent tubes flicker now and then
     if (this.flicker > 0 && this.flicker % 3 !== 0) {

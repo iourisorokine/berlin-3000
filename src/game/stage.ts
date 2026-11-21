@@ -3,7 +3,7 @@ import glowUrl from '../assets/bg/glow.png'
 import level from '../assets/bg/level.json'
 import midUrl from '../assets/bg/mid.png'
 import { audio } from './audio'
-import { BARRIER_Y, VIEW_H, VIEW_W } from './constants'
+import { BARRIER_Y, GROUND_BOT, GROUND_TOP, VIEW_H, VIEW_W } from './constants'
 import { sheet, type Sheet } from './sprites'
 
 /** Where an enemy appears: a position, and whether it walks in (out of the queue, through a door). */
@@ -17,6 +17,10 @@ export interface SpawnPoint {
 export interface Stage {
   /** level length in art pixels */
   len: number
+  /** where fighters can walk (feet y from, to) */
+  band: [number, number]
+  /** the door the hero walks through to finish the level */
+  exit: { x: number; label: string }
   /** fighters standing above this line are drawn behind drawFront (behind the barriers) */
   split: number
   load(): Promise<void>
@@ -179,6 +183,9 @@ function drawLight(): HTMLCanvasElement {
 export class BerghainStage implements Stage {
   len = LEVEL_LEN
   split = BARRIER_Y
+  band: [number, number] = [GROUND_TOP, GROUND_BOT]
+  // the club door, once the bouncer is beaten
+  exit = { x: DOOR_X, label: 'REIN!' }
   far!: HTMLImageElement
   mid!: HTMLImageElement
   glow!: HTMLImageElement

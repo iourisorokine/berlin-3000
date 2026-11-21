@@ -160,8 +160,59 @@ class Audio {
     this.burst(2600, 0.7, 0.18, 0.45, 'highpass')
   }
 
+  /** a shouted word or two: a buzzy voice through two vowel formants, one blip per word */
+  shout(words: number, pitch = 150) {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    for (let i = 0; i < Math.min(4, words); i++) {
+      const t = ctx.currentTime + i * 0.17
+      const o = ctx.createOscillator()
+      o.type = 'sawtooth'
+      o.frequency.setValueAtTime(pitch * (i === words - 1 ? 1.15 : 1), t)
+      o.frequency.exponentialRampToValueAtTime(pitch * 0.8, t + 0.14)
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15)
+      for (const [f, q] of [[750, 6], [1250, 8]] as const) {
+        const bp = ctx.createBiquadFilter()
+        bp.type = 'bandpass'
+        bp.frequency.value = f * (1 + (i % 2) * 0.15)
+        bp.Q.value = q
+        o.connect(bp).connect(g)
+      }
+      g.connect(this.master)
+      o.start(t)
+      o.stop(t + 0.16)
+    }
+  }
+
+  /** an old sofa's springs: a wobbly boing */
+  boing() {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    const t = ctx.currentTime
+    const o = ctx.createOscillator()
+    const lfo = ctx.createOscillator()
+    const depth = ctx.createGain()
+    const g = ctx.createGain()
+    o.type = 'triangle'
+    o.frequency.setValueAtTime(180, t)
+    o.frequency.exponentialRampToValueAtTime(420, t + 0.35)
+    lfo.frequency.value = 22
+    depth.gain.value = 40
+    lfo.connect(depth).connect(o.frequency)
+    g.gain.setValueAtTime(0.25, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.45)
+    o.connect(g).connect(this.master)
+    o.start(t)
+    lfo.start(t)
+    o.stop(t + 0.46)
+    lfo.stop(t + 0.46)
+  }
+
   /** the buskers: an original bluesy accordion lick (minor pentatonic with the blue note) */
-  riff() {
+  riff(vol = 1) {
     const ctx = this.ctx
     if (!ctx || !this.master) return
     const t0 = ctx.currentTime
@@ -174,7 +225,7 @@ class Audio {
       lp.type = 'lowpass'
       lp.frequency.value = 1800
       g.gain.setValueAtTime(0.0001, t)
-      g.gain.exponentialRampToValueAtTime(0.09, t + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.24 * vol, t + 0.02)
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16)
       lp.connect(g).connect(this.master!)
       for (const d of [-7, 7]) {

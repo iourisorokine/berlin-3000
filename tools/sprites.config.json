@@ -1634,7 +1634,7 @@
     "res": 2
   },
   "extras_ubahn": {
-    "targetHeight": 66,
+    "targetHeight": 84,
     "colors": 64,
     "scaleFrom": "extras_ubahn.png",
     "sheets": [
@@ -1666,7 +1666,8 @@
         ],
         "keepAll": true
       }
-    ]
+    ],
+    "res": 2
   },
   "props_ubahn": {
     "targetHeight": 72,

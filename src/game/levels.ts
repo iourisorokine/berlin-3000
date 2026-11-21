@@ -52,11 +52,15 @@ export interface LevelDef {
   win: [string, string]
   lose: [string, string]
   music: 'club' | 'train'
+  /** chance that a knocked-out enemy drops something */
+  dropChance: number
+  /** people standing in the way who never fight: hitting them costs points */
+  bystanders?: { sheet: string; looks: string[]; count: number }
 }
 
 const L1 = level1.levelLen
 const L2 = ubahn.levelLen
-const [D1, D2, D3] = ubahn.doors
+const [D1, D2] = ubahn.doors
 
 export const LEVELS: LevelDef[] = [
   {
@@ -68,6 +72,7 @@ export const LEVELS: LevelDef[] = [
     win: ['KOMM REIN,', 'VIEL SPASS!'],
     lose: ['HEUTE', 'LEIDER NICHT.'],
     loot: ['doner', 'currywurst', 'pretzel', 'cash', 'phone'],
+    dropChance: 0.3,
     props: [
       ['cone', 200, 186],
       ['bin', 300, 168],
@@ -110,27 +115,28 @@ export const LEVELS: LevelDef[] = [
     music: 'train',
     win: ['ZURÜCKBLEIBEN,', 'BITTE!'],
     lose: ['60 EURO,', 'BITTE.'],
-    loot: ['falafel', 'gummies', 'keys', 'wallet', 'ticket'],
+    // more food on the night train: it is a long way home
+    loot: ['falafel', 'falafel', 'gummies', 'gummies', 'keys', 'wallet', 'ticket'],
+    dropChance: 0.45,
+    bystanders: { sheet: 'extras_ubahn', looks: ['6', '7'], count: 3 },
     props: [
-      ['papers', 160, 190],
-      ['suitcase', 640, 170],
-      ['bag', 1010, 196],
-      ['speaker', 1380, 172],
-      ['papers', 1700, 200],
-      ['suitcase', 1880, 186],
-      ['bag', 2400, 176],
+      ['papers', 150, 196],
+      ['bag', 420, 176],
+      ['suitcase', 700, 200],
+      ['speaker', 980, 180],
+      ['bag', 1230, 202],
+      ['suitcase', 1480, 178],
+      ['papers', 1750, 196],
     ],
     waves: [
       { cam: 0, count: [2, 3], pool: ['drunk', 'monk', 'punkgirl', 'drunk'], from: ['right', 'right', 'left'] },
       // first station: the ticket inspectors get on
-      { cam: D1 - VIEW_W / 2, station: true, count: [3, 4], pool: ['inspector', 'inspector', 'mullet', 'tourist', 'drunk'], from: ['train', 'train', 'left', 'right'] },
-      { cam: 700, jitter: 40, count: [3, 4], pool: ['couch', 'monk', 'punkgirl', 'drunk', 'harness'], from: ['right', 'left'] },
-      { cam: 980, count: [1, 2], pool: ['drunk', 'busker'], from: ['right'], chance: 0.4 },
-      { cam: D2 - VIEW_W / 2, station: true, count: [4, 5], pool: ['busker', 'inspector', 'mullet', 'couch', 'tourist', 'punkgirl'], from: ['train', 'train', 'left', 'right'] },
-      { cam: 1600, jitter: 40, count: [4, 5], pool: ['couch', 'harness', 'punkgirl', 'drunk', 'busker', 'monk'], from: ['right', 'left'] },
-      // the last station: a full ticket check
+      { cam: D1 - VIEW_W / 2, station: true, count: [3, 4], pool: ['inspector', 'inspector', 'mullet', 'tourist', 'drunk', 'busker'], from: ['train', 'train', 'left', 'right'] },
+      { cam: 700, jitter: 40, count: [3, 4], pool: ['couch', 'monk', 'punkgirl', 'drunk', 'harness', 'busker'], from: ['right', 'left'] },
+      { cam: 960, count: [1, 2], pool: ['drunk', 'busker'], from: ['right'], chance: 0.4 },
+      // the last station: a full ticket check, then the hero gets off
       {
-        cam: Math.min(D3 - VIEW_W / 2, L2 - VIEW_W),
+        cam: Math.min(D2 - VIEW_W / 2, L2 - VIEW_W),
         station: true,
         count: [4, 5],
         pool: ['couch', 'busker', 'drunk', 'harness', 'punkgirl', 'mullet'],
