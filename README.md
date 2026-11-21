@@ -65,7 +65,7 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | `src/game/stage.ts` | the `Stage` interface and level 1, QUEUE TO BERGHAIN (skyline, club, queue, barriers) |
 | `src/game/ubahn.ts` | level 2, LETZTE BAHN: the moving train, tunnel/station behind the windows, station stops |
 | `src/game/prenzl.ts` | level 3, LATTE ART ATTACK: the Prenzlauer Berg street and the design cafe (a side room) |
-| `src/game/map.ts` | the level-select map of Berlin: pins where the levels happen |
+| `src/game/map.ts` | the level-select map of Berlin: pins where the levels happen; uses the illustrated map (`python3 tools/import_map.py`) once `raw-assets/bg_map.png` exists |
 | `src/game/props.ts` | breakable props of every level and what falls out of them |
 | `src/game/sprites.ts` | atlas loading and drawing |
 | `src/game/audio.ts` | synthesised club kick through the wall, the train, and every sound effect |

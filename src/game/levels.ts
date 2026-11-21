@@ -244,8 +244,21 @@ export function unlockedCount(): number {
   }
 }
 
+/** levels beaten at least once (ticked on the map) */
+const DONE_KEY = 'berlin3000.done'
+export function doneLevels(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]'))
+  } catch {
+    return new Set()
+  }
+}
+
 export function unlockNext(levelIdx: number) {
   try {
+    const done = doneLevels()
+    done.add(LEVELS[levelIdx].id)
+    localStorage.setItem(DONE_KEY, JSON.stringify([...done]))
     const n = Math.max(Number(localStorage.getItem(KEY)) || 1, levelIdx + 2)
     localStorage.setItem(KEY, String(Math.min(LEVELS.length, n)))
   } catch {

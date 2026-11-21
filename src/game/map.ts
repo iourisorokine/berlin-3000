@@ -1,5 +1,17 @@
 import { drawText } from './font'
 
+// The illustrated map from ChatGPT (raw-assets/bg_map.png, imported by tools/import_map.py).
+// Until it exists, the schematic map below is drawn in code.
+const MAP_URL = Object.values(import.meta.glob('../assets/bg/map.png', { eager: true, query: '?url', import: 'default' }))[0] as
+  | string
+  | undefined
+let mapImg: HTMLImageElement | null = null
+if (MAP_URL) {
+  const img = new Image()
+  img.onload = () => (mapImg = img)
+  img.src = MAP_URL
+}
+
 /**
  * The level-select map: a very schematic Berlin (not to scale) with the Spree, the Ringbahn,
  * a few parks, the Fernsehturm, and a pin where each level happens.
@@ -37,6 +49,10 @@ function blob(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, r
 }
 
 export function drawBerlinMap(ctx: CanvasRenderingContext2D, tick: number) {
+  if (mapImg) {
+    ctx.drawImage(mapImg, 0, 0)
+    return
+  }
   ctx.fillStyle = '#0d0a1c'
   ctx.fillRect(0, 0, 384, 216)
   // a faint grid, like a city map
@@ -94,7 +110,7 @@ export function drawBerlinMap(ctx: CanvasRenderingContext2D, tick: number) {
 }
 
 /** a pin; the chosen one bounces and pulses */
-export function drawPin(ctx: CanvasRenderingContext2D, x: number, y: number, n: number, color: string, on: boolean, locked: boolean, tick: number) {
+export function drawPin(ctx: CanvasRenderingContext2D, x: number, y: number, n: number, color: string, on: boolean, locked: boolean, tick: number, done = false) {
   const bob = on ? Math.round(Math.abs(Math.sin(tick / 8)) * -3) : 0
   if (on) {
     const r = 8 + ((tick / 3) % 10)
@@ -118,4 +134,13 @@ export function drawPin(ctx: CanvasRenderingContext2D, x: number, y: number, n: 
   ctx.lineTo(x, y + 1 + bob)
   ctx.fill()
   drawText(ctx, locked ? '?' : String(n), x, y - 10 + bob, { align: 'center', color: '#14101c' })
+  // beaten: a little green tick beside the pin
+  if (done) {
+    const tx = x + 6
+    const ty = y - 14 + bob
+    ctx.fillStyle = '#0d0a1c'
+    ctx.fillRect(tx - 1, ty - 1, 9, 8)
+    ctx.fillStyle = '#7dff5a'
+    for (const [dx, dy] of [[0, 3], [1, 4], [2, 5], [3, 4], [4, 3], [5, 2], [6, 1]]) ctx.fillRect(tx + dx, ty + dy - 1, 1, 2)
+  }
 }

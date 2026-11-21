@@ -17,7 +17,7 @@ import { Input } from './input'
 import { drawLogo } from './logo'
 import { FixedLoop } from './loop'
 import { HERO_ORDER, HEROES, SPECIAL_SLOWDOWN, type HeroId } from './heroes'
-import { LEVELS, rollSpawns, rollWaves, unlockedCount, unlockNext, type Spawn, type WaveDef } from './levels'
+import { doneLevels, LEVELS, rollSpawns, rollWaves, unlockedCount, unlockNext, type Spawn, type WaveDef } from './levels'
 import { makePlayer, updatePlayer, type Player } from './player'
 import { drawBerlinMap, drawPin, SPOTS } from './map'
 import { drawBreakable, gone, LOOT, makeBreakables, standing, updateBreakable, type Breakable } from './props'
@@ -166,7 +166,7 @@ export class Game {
       case 'gameover':
         return ['RETRY', 'CHANGE FIGHTER', 'LEVEL SELECT', 'MAIN MENU']
       case 'win':
-        return [...(this.levelIdx + 1 < LEVELS.length ? ['NEXT LEVEL'] : []), 'PLAY AGAIN', 'LEVEL SELECT', 'MAIN MENU']
+        return []
       default:
         return []
     }
@@ -391,9 +391,23 @@ export class Game {
       }
       case 'gameover':
       case 'win': {
+        // a won level goes back to the map, where the hero walks on to the next pin
+        if (this.scene === 'win') {
+          if ((this.sceneT > 90 && (pr.start || pr.attack)) || this.sceneT > 330) {
+            const next = this.levelIdx + 1
+            if (next < LEVELS.length && next < unlockedCount()) {
+              this.levelIdx = next
+              audio.mode = this.level.music
+            }
+            this.setScene('levels')
+            return
+          }
+          this.player.t++
+          this.fx.update()
+          return
+        }
         const pick = this.sceneT > 60 ? this.menuPick() : null
-        if (pick === 'NEXT LEVEL') this.levelIdx++
-        if (pick === 'RETRY' || pick === 'PLAY AGAIN' || pick === 'NEXT LEVEL') {
+        if (pick === 'RETRY' || pick === 'PLAY AGAIN') {
           this.reset()
           this.setScene('play')
           return
@@ -1127,7 +1141,8 @@ export class Game {
             ],
             44,
           )
-          if (t > 60) this.drawMenu(ctx, 140)
+          if (t > 90 && Math.floor(t / 20) % 2 === 0)
+            drawText(ctx, this.cb.touch ? 'TAP HIT: BACK TO THE MAP' : 'ENTER: BACK TO THE MAP', VIEW_W >> 1, 150, { align: 'center', color: '#ffffff', outline: '#14101c' })
         }
       }
     }
@@ -1176,9 +1191,10 @@ export class Game {
     })
     ctx.stroke()
     ctx.setLineDash([])
+    const done = doneLevels()
     LEVELS.forEach((lv, i) => {
       const s = SPOTS[lv.id]
-      drawPin(ctx, s.x, s.y, i + 1, s.color, i === this.levelIdx, i >= open, t)
+      drawPin(ctx, s.x, s.y, i + 1, s.color, i === this.levelIdx, i >= open, t, done.has(lv.id))
     })
     // the hero walks from pin to pin
     const h = HEROES[this.heroId]
