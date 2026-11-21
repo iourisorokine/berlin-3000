@@ -160,6 +160,26 @@ def waist_x(im: Image.Image) -> float:
     return float(np.median(xs))
 
 
+def save_indexed(im: Image.Image, path: Path):
+    """Atlases use few colours: an exact palette PNG is about 3x smaller than RGBA (it keeps the
+    single-file build small). Falls back to RGBA if there are more than 255 colours."""
+    a = np.array(im.convert("RGBA"))
+    a[a[..., 3] == 0] = 0
+    flat = a.reshape(-1, 4)
+    cols, idx = np.unique(flat, axis=0, return_inverse=True)
+    if len(cols) > 256:
+        im.save(path, optimize=True)
+        return
+    # index 0 must be the transparent colour
+    order = np.argsort(cols[:, 3] != 0, kind="stable")
+    cols = cols[order]
+    remap = np.empty_like(order)
+    remap[order] = np.arange(len(order))
+    p = Image.fromarray(remap[idx.ravel()].reshape(a.shape[:2]).astype(np.uint8), "P")
+    p.putpalette(cols[:, :3].ravel().tolist() + [0] * (768 - 3 * len(cols)))
+    p.save(path, optimize=True, transparency=bytes(cols[:, 3].astype(np.uint8).tolist()))
+
+
 def build(name: str, cfg: dict):
     # sheets whose raw image is not there yet are skipped (heroes waiting for their art)
     cfg = dict(cfg)
@@ -263,7 +283,7 @@ def build(name: str, cfg: dict):
         for n in body:
             meta[n]["ax"] = int(round(waist_x(img_of[n]) - d))
     OUT.mkdir(parents=True, exist_ok=True)
-    atlas.save(OUT / f"{name}.png", optimize=True)
+    save_indexed(atlas, OUT / f"{name}.png")
     (OUT / f"{name}.json").write_text(json.dumps({"image": f"{name}.png", "res": res, "frames": meta}, indent=1))
     print(f"  -> {name}.png ({atlas.width}x{atlas.height}), {len(meta)} frames")
 

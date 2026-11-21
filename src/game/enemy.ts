@@ -37,7 +37,15 @@ function raverAttack(id: string, windup: number, reach: number, damage: number, 
   }
 }
 
+/** The buskers never walk anywhere without playing: their idle frames double as a shuffle. */
+const BUSKER_ANIM: AnimSet = {
+  ...RAVER_ANIM,
+  walk: ['idle1', 'idle2', 'idle3', 'idle4'],
+}
+
 export interface EnemyType {
+  /** sways from side to side while walking (the drunk) */
+  wobble?: boolean
   name: string
   sheet: SheetKey
   anim: AnimSet
@@ -120,6 +128,52 @@ export const ENEMY_TYPES = {
     ],
     score: 120,
   },
+  // ---------- LETZTE BAHN (the U-Bahn) ----------
+  inspector: {
+    name: 'KONTROLLETTI',
+    sheet: 'inspector',
+    anim: RAVER_ANIM,
+    hp: 48,
+    speed: 1.05,
+    power: 1,
+    // flashes his badge: no ticket = you stand there frozen and pay
+    moves: [raverAttack('badge', 14, 42, 3, { knockback: 0.4, fx: 'ticket', say: 'FAHRSCHEIN, BITTE!' })],
+    score: 160,
+  },
+  drunk: {
+    name: 'PROST PAULE',
+    sheet: 'drunk',
+    anim: RAVER_ANIM,
+    hp: 44,
+    speed: 0.8,
+    power: 1,
+    wobble: true,
+    // a huge clumsy swing that sometimes misses completely
+    moves: [raverAttack('swing', 20, 40, 11, { knockback: 2.6, knockdown: true, fx: 'stagger' })],
+    score: 140,
+  },
+  couch: {
+    name: 'COUCH CREW',
+    sheet: 'couch',
+    anim: RAVER_ANIM,
+    hp: 95,
+    speed: 0.6,
+    power: 1,
+    // both charge with the sofa: a long ram that knocks you flat
+    moves: [raverAttack('ram', 22, 46, 13, { knockback: 3.6, knockdown: true, heavy: true, lunge: 2.4, say: 'HAU RUCK!', fx: 'thump' })],
+    score: 260,
+  },
+  busker: {
+    name: 'BUSKER DUO',
+    sheet: 'busker',
+    anim: BUSKER_ANIM,
+    hp: 60,
+    speed: 0.45,
+    power: 1,
+    // the big chord: little damage, but it blows you far back down the carriage
+    moves: [raverAttack('chord', 18, 62, 5, { knockback: 5.5, fx: 'chord', say: 'HIT THE ROAD!' })],
+    score: 200,
+  },
   bouncer: {
     name: 'DER TUERSTEHER',
     sheet: 'bouncer',
@@ -172,6 +226,8 @@ export interface Enemy extends Fighter {
   enterTo: number
   /** which side of the player this attacker should stand on (set by the game) */
   slot: -1 | 0 | 1
+  /** this swing will miss (the drunk stumbling) */
+  whiff: boolean
 }
 
 export function makeEnemy(kind: EnemyKind, x: number, y: number, fromQueue: boolean): Enemy {
@@ -191,6 +247,7 @@ export function makeEnemy(kind: EnemyKind, x: number, y: number, fromQueue: bool
   e.kind = kind
   e.isBoss = kind === 'bouncer'
   e.slot = 0
+  e.whiff = false
   e.enterTo = GROUND_TOP + 4 + Math.random() * 14
   if (fromQueue) setState(e, 'enter')
   return e
@@ -249,6 +306,8 @@ export function updateEnemy(e: Enemy, target: Fighter) {
     e.vy = Math.sign(dy) * Math.min(Math.abs(dy), sp * 0.6)
     moving = true
   }
+  // PROST PAULE never walks in a straight line
+  if (moving && (ENEMY_TYPES[e.kind] as EnemyType).wobble) e.vy += Math.sin((e.t + e.id * 17) / 9) * 0.55
   e.facing = side === -1 ? 1 : -1
   if (moving && e.state !== 'walk') setState(e, 'walk')
   if (!moving && e.state !== 'idle') setState(e, 'idle')

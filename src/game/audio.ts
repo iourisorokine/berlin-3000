@@ -17,6 +17,12 @@ class Audio {
   closeness = 0
   /** time of the last kick, for visuals pulsing on the beat */
   lastKickAt = 0
+  /** what plays in the background: the club through the walls, or a train on the rails */
+  mode: 'club' | 'train' = 'club'
+  /** 0..1, how fast the train runs (rail clacks and rumble) */
+  trainSpeed = 0
+  private rumble: GainNode | null = null
+  private nextClack = 0
 
   start() {
     if (this.ctx) return
@@ -55,6 +61,11 @@ class Audio {
 
   private schedule() {
     const ctx = this.ctx!
+    if (this.mode === 'train') {
+      this.scheduleTrain()
+      return
+    }
+    if (this.rumble) this.rumble.gain.setTargetAtTime(0, ctx.currentTime, 0.2)
     const spb = 60 / 132
     const k = this.closeness
     this.clubFilter!.frequency.setTargetAtTime(160 + k * k * 2400, ctx.currentTime, 0.3)
@@ -69,6 +80,129 @@ class Audio {
       this.nextBeat += spb
       this.beat++
     }
+  }
+
+  /** the night train: a low rumble and the clack-clack of the rail joints, faster with speed */
+  private scheduleTrain() {
+    const ctx = this.ctx!
+    if (!this.rumble) {
+      const s = ctx.createBufferSource()
+      s.buffer = this.noise
+      s.loop = true
+      const f = ctx.createBiquadFilter()
+      f.type = 'lowpass'
+      f.frequency.value = 220
+      this.rumble = ctx.createGain()
+      this.rumble.gain.value = 0
+      s.connect(f).connect(this.rumble).connect(this.master!)
+      s.start()
+    }
+    const v = this.trainSpeed
+    this.rumble.gain.setTargetAtTime(0.05 + v * 0.22, ctx.currentTime, 0.3)
+    this.nextBeat = ctx.currentTime + 0.1 // keeps the club beat from bursting out when it comes back
+    if (v < 0.15) return
+    if (this.nextClack < ctx.currentTime) this.nextClack = ctx.currentTime + 0.05
+    while (this.nextClack < ctx.currentTime + 0.2) {
+      const t = this.nextClack
+      this.clack(t, 0.35 * v)
+      this.clack(t + 0.12, 0.28 * v)
+      this.nextClack += 0.9 / Math.max(0.3, v)
+    }
+  }
+
+  private clack(t: number, vol: number) {
+    const ctx = this.ctx!
+    const s = ctx.createBufferSource()
+    s.buffer = this.noise
+    const f = ctx.createBiquadFilter()
+    f.type = 'bandpass'
+    f.frequency.value = 900
+    f.Q.value = 3
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(vol, t)
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.07)
+    s.connect(f).connect(g).connect(this.master!)
+    s.start(t)
+    s.stop(t + 0.08)
+  }
+
+  /** brakes squealing into a station */
+  brake() {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    const t = ctx.currentTime
+    const o = ctx.createOscillator()
+    const f = ctx.createBiquadFilter()
+    const g = ctx.createGain()
+    o.type = 'sawtooth'
+    o.frequency.setValueAtTime(1900, t)
+    o.frequency.linearRampToValueAtTime(1500, t + 1.6)
+    f.type = 'bandpass'
+    f.frequency.value = 1800
+    f.Q.value = 8
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.08, t + 0.3)
+    g.gain.setValueAtTime(0.08, t + 1.3)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8)
+    o.connect(f).connect(g).connect(this.master)
+    o.start(t)
+    o.stop(t + 1.85)
+  }
+
+  /** the two-tone chime before the doors close */
+  chime() {
+    this.tone(784, 0, 0.28, 0.18)
+    this.tone(622, 0.3, 0.45, 0.18)
+  }
+
+  /** pneumatic hiss of the doors opening or closing */
+  doors() {
+    this.burst(2600, 0.7, 0.18, 0.45, 'highpass')
+  }
+
+  /** the buskers: an original bluesy accordion lick (minor pentatonic with the blue note) */
+  riff() {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    const t0 = ctx.currentTime
+    const notes = [57, 60, 62, 63, 64, 67, 64, 69] // A3 C4 D4 Eb4 E4 G4 E4 A4
+    notes.forEach((n, i) => {
+      const t = t0 + i * 0.1 + (i % 2) * 0.03 // a little shuffle
+      const f = 440 * Math.pow(2, (n - 69) / 12)
+      const g = ctx.createGain()
+      const lp = ctx.createBiquadFilter()
+      lp.type = 'lowpass'
+      lp.frequency.value = 1800
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.09, t + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16)
+      lp.connect(g).connect(this.master!)
+      for (const d of [-7, 7]) {
+        const o = ctx.createOscillator()
+        o.type = 'sawtooth'
+        o.frequency.value = f
+        o.detune.value = d // two reeds slightly apart: an accordion's wobble
+        o.connect(lp)
+        o.start(t)
+        o.stop(t + 0.18)
+      }
+    })
+  }
+
+  private tone(freq: number, at: number, dur: number, vol: number) {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    const t = ctx.currentTime + at
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    o.type = 'sine'
+    o.frequency.value = freq
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+    o.connect(g).connect(this.master)
+    o.start(t)
+    o.stop(t + dur + 0.02)
   }
 
   private kick(t: number) {

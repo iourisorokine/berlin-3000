@@ -13,6 +13,10 @@ export interface Player extends Fighter {
   score: number
   /** frames left coughing in vape smoke (walks slower) */
   slowT: number
+  /** frozen by a ticket inspector: can't move until it runs out (mashing buttons helps) */
+  frozenT: number
+  /** has a day ticket: inspectors can't freeze you */
+  ticketT: number
   /** double-tap detection: last direction tapped and frames since */
   tapDir: number
   tapT: number
@@ -41,6 +45,8 @@ export function makePlayer(id: HeroId, x: number, y: number): Player {
     airAttackUsed: false,
     score: 0,
     slowT: 0,
+    frozenT: 0,
+    ticketT: 0,
     boostT: 0,
     calmT: 0,
     tapDir: 0,
@@ -54,6 +60,16 @@ export function updatePlayer(p: Player, input: Input) {
   const h = input.held
   if (p.specialCd > 0) p.specialCd--
   if (p.slowT > 0) p.slowT--
+  if (p.ticketT > 0) p.ticketT--
+  if (p.frozenT > 0) {
+    p.frozenT--
+    if (input.pressed.attack || input.pressed.jump) p.frozenT = Math.max(0, p.frozenT - 8)
+    if (p.state === 'idle' || p.state === 'walk') {
+      if (p.state !== 'idle') setState(p, 'idle')
+      p.vy = 0
+      return
+    }
+  }
   if (p.boostT > 0) p.boostT--
   const slow = (p.slowT > 0 ? 0.55 : 1) * (p.boostT > 0 ? 1.35 : 1)
   if (p.comboTimer > 0) p.comboTimer--

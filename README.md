@@ -1,6 +1,6 @@
 # Berlin 3000
 
-A side-scrolling beat 'em up set in the queue outside a Berlin techno club, inspired by
+A side-scrolling beat 'em up through a Berlin night (the queue outside a techno club, the last U-Bahn), inspired by
 Marseille 3000. React + TypeScript + Canvas, built with Vite (same setup as Office Fighter).
 
 ## Run it
@@ -59,11 +59,25 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | --- | --- |
 | `src/game/constants.ts` | screen size, physics, combat feel (hit-stop, reach), enemy limits |
 | `src/game/heroes.ts` | CRAZY NESS (id jule), SHOVELIST, GOTHILDE (ids `ravequeen`, and `queen` for the old enemy-sheet version), LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
-| `src/game/enemy.ts` | enemy types and AI |
-| `src/game/Game.ts` | waves, camera, hit resolution, scenes |
-| `src/game/stage.ts` | the code-drawn placeholder level (sky, Fernsehturm, power plant, queue) |
-| `src/game/sprites.ts` | atlas loading, colour variants, drawing |
-| `src/game/audio.ts` | synthesised club kick through the wall and hit sounds |
+| `src/game/enemy.ts` | enemy types and AI (level 1 crowd, plus KONTROLLETTI, PROST PAULE, COUCH CREW, BUSKER DUO) |
+| `src/game/levels.ts` | the levels: name, stage, randomised waves, props, loot, win/lose lines; unlock progress |
+| `src/game/Game.ts` | wave flow, camera, hit resolution, enemy tricks, scenes (title, level select, fighter select, play) |
+| `src/game/stage.ts` | the `Stage` interface and level 1, QUEUE TO BERGHAIN (skyline, club, queue, barriers) |
+| `src/game/ubahn.ts` | level 2, LETZTE BAHN: the moving train, tunnel/station behind the windows, station stops |
+| `src/game/props.ts` | breakable props of every level and what falls out of them |
+| `src/game/sprites.ts` | atlas loading and drawing |
+| `src/game/audio.ts` | synthesised club kick through the wall, the train, and every sound effect |
+
+## Levels and waves
+
+Each level in `src/game/levels.ts` lists its waves as rules, not fixed lists: where the camera stops,
+how many enemies (a range), which kinds can come (a pool) and from where (screen edges, the queue,
+the club door, a train door). Every run rolls them again, shifts some fights a little and rolls
+optional surprise fights in or out. Levels open one by one once the previous one is beaten
+(`UNLOCK_ALL` is on for now, so every level is open).
+
+The U-Bahn's art is built by `python3 tools/import_ubahn.py`: the carriage segments with their
+windows cut out, the door section closed and open, the tunnel and the station behind the windows.
 
 ## Hit reactions
 

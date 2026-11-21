@@ -13,10 +13,7 @@ export const RES = 2
 /** Character size compared with the first version: reaches and enemy spacing scale with it. */
 export const SIZE = 1.15
 
-/** Length of level 1 in art pixels (set by the background images, about 6 screens). */
-export const LEVEL_LEN: number = level.levelLen
-
-/** Where the buildings meet the kerb. */
+/** Where the buildings meet the kerb (each level's length comes from its stage). */
 export const WALL_BASE_Y: number = level.wallBase
 /** The queue barriers stand on this line; the queue waits behind it. */
 export const BARRIER_Y = 146

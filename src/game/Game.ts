@@ -1,12 +1,10 @@
 import { audio } from './audio'
 import {
-  BARRIER_Y,
   DROP_CHANCE,
   GROUND_BOT,
   GROUND_TOP,
   HITSTOP,
   HITSTOP_HEAVY,
-  LEVEL_LEN,
   MAX_ATTACKERS,
   RES,
   VIEW_H,
@@ -21,12 +19,14 @@ import { Input } from './input'
 import { drawLogo } from './logo'
 import { FixedLoop } from './loop'
 import { HERO_ORDER, HEROES, type HeroId } from './heroes'
+import { LEVELS, rollSpawns, rollWaves, unlockedCount, unlockNext, type Spawn, type WaveDef } from './levels'
 import { makePlayer, updatePlayer, type Player } from './player'
 import { drawBreakable, gone, LOOT, makeBreakables, standing, updateBreakable, type Breakable } from './props'
+import type { Stage } from './stage'
 import { drawFrame, drawPortrait, hasSheet, loadSprites, sheet } from './sprites'
 
 /** what a pickup does: heal (hp), refill the special, or score points */
-const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolean; score?: number }> = {
+const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolean; score?: number; ticket?: boolean }> = {
   doner: { label: 'DONER', hp: 35 },
   currywurst: { label: 'CURRYWURST', hp: 25 },
   pretzel: { label: 'BREZEL', hp: 15 },
@@ -35,79 +35,22 @@ const PICKUPS: Record<PickupKind, { label: string; hp?: number; special?: boolea
   phone: { label: '300', score: 300 },
   wristband: { label: 'VIP STAMP 1000', score: 1000 },
   glowstick: { label: '200', score: 200 },
-}
-const ENEMY_LOOT: PickupKind[] = ['doner', 'currywurst', 'pretzel', 'cash', 'phone']
-import { DOOR_X, OPEN, QUEUE_GAPS, Stage } from './stage'
-
-export type Scene = 'loading' | 'title' | 'select' | 'play' | 'paused' | 'gameover' | 'win'
-
-interface Spawn {
-  kind: EnemyKind
-  from: 'left' | 'right' | 'queue' | 'door'
-  /** for 'queue': x of the barrier gap */
-  gap?: number
-  delay: number
-}
-
-interface Wave {
-  /** camera x where the wave starts; the camera stays there until it is cleared */
-  cam: number
-  spawns: Spawn[]
+  // the U-Bahn: a day ticket makes the inspectors harmless for 25 seconds
+  ticket: { label: 'TAGESTICKET', ticket: true },
+  falafel: { label: 'FALAFEL', hp: 30 },
+  gummies: { label: 'GUMMIBAERCHEN', hp: 12 },
+  coffee: { label: 'KAFFEE: SPECIAL READY', special: true },
+  umbrella: { label: '150', score: 150 },
+  pizzabox: { label: '150', score: 150 },
+  skate: { label: '250', score: 250 },
+  gnome: { label: 'GARTENZWERG 1000', score: 1000 },
+  shoe: { label: '400', score: 400 },
+  keys: { label: '300', score: 300 },
+  wallet: { label: '500', score: 500 },
+  shades: { label: '200', score: 200 },
 }
 
-const WAVES: Wave[] = [
-  {
-    cam: 0,
-    spawns: [
-      { kind: 'monk', from: 'right', delay: 30 },
-      { kind: 'tourist', from: 'right', delay: 150 },
-    ],
-  },
-  {
-    cam: OPEN,
-    spawns: [
-      { kind: 'queen', from: 'right', delay: 20 },
-      { kind: 'monk', from: 'left', delay: 120 },
-      { kind: 'tourist', from: 'right', delay: 200 },
-    ],
-  },
-  {
-    cam: 380 + OPEN,
-    spawns: [
-      { kind: 'punkgirl', from: 'queue', gap: QUEUE_GAPS[0], delay: 0 },
-      { kind: 'mullet', from: 'right', delay: 60 },
-      { kind: 'monk', from: 'left', delay: 200 },
-    ],
-  },
-  {
-    cam: 840 + OPEN,
-    spawns: [
-      { kind: 'harness', from: 'queue', gap: QUEUE_GAPS[1], delay: 0 },
-      { kind: 'tourist', from: 'right', delay: 40 },
-      { kind: 'queen', from: 'queue', gap: QUEUE_GAPS[1], delay: 120 },
-      { kind: 'punkgirl', from: 'left', delay: 240 },
-    ],
-  },
-  {
-    cam: 1300 + OPEN,
-    spawns: [
-      { kind: 'queen', from: 'queue', gap: QUEUE_GAPS[2], delay: 0 },
-      { kind: 'harness', from: 'right', delay: 30 },
-      { kind: 'mullet', from: 'queue', gap: QUEUE_GAPS[3], delay: 120 },
-      { kind: 'punkgirl', from: 'right', delay: 200 },
-      { kind: 'monk', from: 'queue', gap: QUEUE_GAPS[3], delay: 300 },
-      { kind: 'tourist', from: 'left', delay: 380 },
-    ],
-  },
-  {
-    cam: LEVEL_LEN - VIEW_W,
-    spawns: [
-      { kind: 'bouncer', from: 'door', delay: 30 },
-      { kind: 'punkgirl', from: 'right', delay: 260 },
-      { kind: 'mullet', from: 'left', delay: 420 },
-    ],
-  },
-]
+export type Scene = 'loading' | 'title' | 'levels' | 'select' | 'play' | 'paused' | 'gameover' | 'win'
 
 /** a thrown record: spins, flies straight and slices through everyone in its path */
 interface Projectile {
@@ -135,7 +78,17 @@ export class Game {
   readonly input = new Input()
   private ctx: CanvasRenderingContext2D
   private loop: FixedLoop
-  private stage: Stage | null = null
+  private stages: Stage[] = []
+  /** the level being played (or highlighted on the level-select screen) */
+  private levelIdx = 0
+  /** this run's waves (rolled at every start) */
+  private waves: WaveDef[] = []
+  private get level() {
+    return LEVELS[this.levelIdx]
+  }
+  private get stage(): Stage | null {
+    return this.stages[this.levelIdx] ?? null
+  }
   private fx = new Effects()
   scene: Scene = 'loading'
   player!: Player
@@ -174,11 +127,11 @@ export class Game {
       case 'title':
         return ['PLAY', 'CONTROLS', `SOUND: ${audio.muted ? 'OFF' : 'ON'}`]
       case 'paused':
-        return ['RESUME', 'RESTART LEVEL', 'CHANGE FIGHTER', 'MAIN MENU']
+        return ['RESUME', 'RESTART LEVEL', 'CHANGE FIGHTER', 'LEVEL SELECT', 'MAIN MENU']
       case 'gameover':
-        return ['RETRY', 'CHANGE FIGHTER', 'MAIN MENU']
+        return ['RETRY', 'CHANGE FIGHTER', 'LEVEL SELECT', 'MAIN MENU']
       case 'win':
-        return ['PLAY AGAIN', 'CHANGE FIGHTER', 'MAIN MENU']
+        return [...(this.levelIdx + 1 < LEVELS.length ? ['NEXT LEVEL'] : []), 'PLAY AGAIN', 'LEVEL SELECT', 'MAIN MENU']
       default:
         return []
     }
@@ -232,9 +185,9 @@ export class Game {
   async start() {
     this.loop.start()
     await loadSprites()
-    const stage = new Stage()
-    await stage.load()
-    this.stage = stage
+    const stages = LEVELS.map((l) => l.makeStage())
+    await Promise.all(stages.map((st) => st.load()))
+    this.stages = stages
     this.reset()
     this.setScene('title')
   }
@@ -256,7 +209,10 @@ export class Game {
   private reset() {
     this.player = makePlayer(this.heroId, 70, 180)
     this.enemies = []
-    this.props = makeBreakables()
+    this.props = makeBreakables(this.level.props)
+    this.waves = rollWaves(this.level.waves)
+    this.stage?.reset?.()
+    audio.mode = this.level.music
     this.camX = 0
     this.waveIdx = 0
     this.waveActive = false
@@ -277,6 +233,8 @@ export class Game {
     this.tick++
     this.sceneT++
     const pr = this.input.pressed
+    // the backdrop keeps living behind the menus (the train rolls on)
+    if (this.scene !== 'play' && this.scene !== 'paused' && this.stage) this.stage.update()
     switch (this.scene) {
       case 'title': {
         if (this.showControls) {
@@ -284,12 +242,28 @@ export class Game {
           return
         }
         const pick = this.menuPick()
-        if (pick === 'PLAY') this.setScene('select')
+        if (pick === 'PLAY') this.setScene('levels')
         else if (pick === 'CONTROLS') this.showControls = true
         else if (pick?.startsWith('SOUND')) {
           if (this.cb.onToggleMute) this.cb.onToggleMute()
           else audio.setMuted(!audio.muted)
         }
+        return
+      }
+      case 'levels': {
+        if (pr.left || pr.right) {
+          this.levelIdx = (this.levelIdx + (pr.right ? 1 : -1) + LEVELS.length) % LEVELS.length
+          this.stage?.reset?.()
+          audio.mode = this.level.music
+          audio.swing()
+        }
+        if (this.sceneT > 10 && (pr.start || pr.attack)) {
+          if (this.levelIdx < unlockedCount()) {
+            audio.pickup()
+            this.setScene('select')
+          } else audio.hit(false)
+        }
+        if (pr.pause) this.setScene('title')
         return
       }
       case 'select':
@@ -304,7 +278,7 @@ export class Game {
           this.reset()
           this.setScene('play')
         }
-        if (pr.pause) this.setScene('title')
+        if (pr.pause) this.setScene('levels')
         return
       case 'paused': {
         if (pr.pause) {
@@ -317,18 +291,21 @@ export class Game {
           this.reset()
           this.setScene('play')
         } else if (pick === 'CHANGE FIGHTER') this.setScene('select')
+        else if (pick === 'LEVEL SELECT') this.setScene('levels')
         else if (pick === 'MAIN MENU') this.setScene('title')
         return
       }
       case 'gameover':
       case 'win': {
         const pick = this.sceneT > 60 ? this.menuPick() : null
-        if (pick === 'RETRY' || pick === 'PLAY AGAIN') {
+        if (pick === 'NEXT LEVEL') this.levelIdx++
+        if (pick === 'RETRY' || pick === 'PLAY AGAIN' || pick === 'NEXT LEVEL') {
           this.reset()
           this.setScene('play')
           return
         }
         if (pick === 'CHANGE FIGHTER') this.setScene('select')
+        else if (pick === 'LEVEL SELECT') this.setScene('levels')
         else if (pick === 'MAIN MENU') this.setScene('title')
         this.player.t++
         for (const e of this.enemies) physics(e)
@@ -354,6 +331,16 @@ export class Game {
     }
     const p = this.player
     this.updateWaves()
+    // the stage moves: a braking or departing train throws everyone standing
+    const jolt = this.stage!.update()
+    if (jolt) {
+      for (const f of [p as Fighter, ...this.enemies])
+        if (f.z === 0 && f.state !== 'down' && f.state !== 'dead' && f.state !== 'enter') f.vx += jolt
+      if (Math.abs(jolt) > 1) {
+        this.shake = Math.max(this.shake, 6)
+        this.fx.popup(p.x, p.y - 100, jolt > 0 ? 'RUCK!' : 'WOAH!', '#ffe14a')
+      }
+    }
 
     // attack tokens: only the closest few enemies may attack at once
     const fighters = this.enemies
@@ -441,7 +428,7 @@ export class Game {
       }
       // keep everyone in the walkable band (except while stepping out of the queue)
       if (f.state !== 'enter') f.y = Math.max(GROUND_TOP, Math.min(GROUND_BOT, f.y))
-      f.x = Math.max(8, Math.min(LEVEL_LEN - 8, f.x))
+      f.x = Math.max(8, Math.min(this.stage!.len - 8, f.x))
     }
     p.x = Math.max(this.camX + 10, Math.min(this.camX + VIEW_W - 10, p.x))
     // enemies standing on each other's toes drift apart
@@ -468,14 +455,15 @@ export class Game {
     this.enemies = this.enemies.filter((e) => !e.remove)
     this.fx.update()
     this.updateCamera()
-    audio.closeness = Math.max(0, Math.min(1, (p.x - 300) / (DOOR_X - 300)))
+    audio.closeness = this.stage!.closeness(p.x)
     this.ghostHp += (p.hp / p.maxHp - this.ghostHp) * 0.04
     if (this.lastFoeT > 0) this.lastFoeT--
 
     if (p.state === 'dead' && p.t > 90) this.setScene('gameover')
     if (this.cleared && this.sceneT > 0 && !this.enemies.length) {
-      if (this.waveIdx >= WAVES.length) {
+      if (this.waveIdx >= this.waves.length) {
         setState(p, 'victory')
+        unlockNext(this.levelIdx)
         this.setScene('win')
       }
     }
@@ -483,22 +471,25 @@ export class Game {
 
   private updateWaves() {
     if (!this.waveActive) {
-      const w = WAVES[this.waveIdx]
+      const w = this.waves[this.waveIdx]
       if (w && this.camX >= w.cam - 0.5) {
         this.camX = w.cam
         this.waveActive = true
         this.waveT = 0
-        this.pending = [...w.spawns]
+        this.pending = rollSpawns(w)
+        if (w.station) this.stage!.arrive?.()
       }
       return
     }
-    this.waveT++
+    // spawns wait while the train is still braking into the station
+    if (this.stage!.ready()) this.waveT++
     for (const s of this.pending.filter((s) => s.delay <= this.waveT)) this.spawn(s)
     this.pending = this.pending.filter((s) => s.delay > this.waveT)
     if (!this.pending.length && this.enemies.every((e) => e.state === 'dead')) {
+      if (this.waves[this.waveIdx].station) this.stage!.depart?.()
       this.waveActive = false
       this.waveIdx++
-      if (this.waveIdx >= WAVES.length) this.cleared = true
+      if (this.waveIdx >= this.waves.length) this.cleared = true
     }
   }
 
@@ -510,10 +501,10 @@ export class Game {
       s = { ...s, kind: alt[this.enemies.length % alt.length] }
     }
     const y = GROUND_TOP + 6 + Math.random() * (GROUND_BOT - GROUND_TOP - 12)
-    let e: Enemy
-    if (s.from === 'queue') e = makeEnemy(s.kind, s.gap!, BARRIER_Y - 8, true)
-    else if (s.from === 'door') e = makeEnemy(s.kind, DOOR_X, BARRIER_Y - 6, true)
-    else e = makeEnemy(s.kind, s.from === 'right' ? this.camX + VIEW_W + 14 : this.camX - 14, y, false)
+    // out of the queue, the club door or a train door; from a screen edge if the stage has no such place
+    const at = s.from === 'left' || s.from === 'right' ? null : this.stage!.spawnPoint(s.from, this.camX)
+    const fromRight = s.from === 'right' || (!at && Math.random() < 0.6)
+    const e = at ? makeEnemy(s.kind, at.x, at.y, at.enter) : makeEnemy(s.kind, fromRight ? this.camX + VIEW_W + 14 : this.camX - 14, y, false)
     e.facing = e.x > this.player.x ? -1 : 1
     this.enemies.push(e)
   }
@@ -544,7 +535,7 @@ export class Game {
     }
     // enemy attacks
     for (const e of this.enemies) {
-      if (!e.move || e.move.harmless || e.state !== 'attack' || !isActive(e)) continue
+      if (!e.move || e.move.harmless || e.whiff || e.state !== 'attack' || !isActive(e)) continue
       if (!canBeHit(p) || e.hitList.has(p.id) || !inReach(e, p, e.move)) continue
       e.hitList.add(p.id)
       this.hit(e, p)
@@ -600,7 +591,7 @@ export class Game {
         const pts = ENEMY_TYPES[e.kind].score
         this.player.score += pts
         this.fx.popup(e.x, e.y - 92, `+${pts}`)
-        if (!e.isBoss && Math.random() < DROP_CHANCE) this.fx.drop(ENEMY_LOOT[Math.floor(Math.random() * ENEMY_LOOT.length)], e.x, e.y)
+        if (!e.isBoss && Math.random() < DROP_CHANCE) this.fx.drop(this.level.loot[Math.floor(Math.random() * this.level.loot.length)], e.x, e.y)
         if (e.isBoss) {
           this.freeze = 30
           this.shake = 20
@@ -674,6 +665,11 @@ export class Game {
   private enemyTrick(e: Enemy, m: Move) {
     const p = this.player
     if (e.t === 1 && m.say) this.fx.popup(e.x, e.y - 106, m.say, '#ffffff')
+    // PROST PAULE: one swing in three goes nowhere
+    if (e.t === 1) {
+      e.whiff = m.fx === 'stagger' && Math.random() < 0.35
+      if (e.whiff) this.fx.popup(e.x, e.y - 100, 'HICKS!', '#ffd0a0')
+    }
     if (!m.fx || e.t !== m.active[0]) return
     const front = e.x + e.facing * 22
     switch (m.fx) {
@@ -711,6 +707,31 @@ export class Game {
         this.fx.dust(front, e.y)
         audio.thud()
         break
+      case 'ticket': {
+        audio.click()
+        const near = Math.abs(p.x - e.x) < 50 && Math.abs(p.y - e.y) < 14 && Math.sign(p.x - e.x) === e.facing
+        if (!near || p.state === 'down' || p.state === 'dead' || p.z > 0) break
+        if (p.ticketT > 0) {
+          this.fx.popup(p.x, p.y - 100, 'HAB ICH!', '#7dff5a')
+          break
+        }
+        // no ticket: frozen on the spot, and it costs you
+        p.frozenT = 80
+        p.score = Math.max(0, p.score - 60)
+        this.fx.popup(p.x, p.y - 30, '-60 EURO', '#ff7a7a')
+        break
+      }
+      case 'stagger':
+        if (e.whiff) {
+          e.vx += e.facing * 2 // swings into thin air and stumbles past
+          audio.whoosh()
+        } else audio.swing()
+        break
+      case 'chord':
+        audio.riff()
+        this.fx.gust(front, e.y, e.facing)
+        this.fx.gust(front + e.facing * 26, e.y - 4, e.facing)
+        break
       case 'selfie':
         this.fx.snap(e.x + e.facing * 20, e.y, 78)
         audio.click()
@@ -738,6 +759,7 @@ export class Game {
       b.vx = p.facing * 3
       this.fx.dust(b.x, b.y)
     }
+    if (b.kind === 'speaker') audio.flash()
     const loot = LOOT[b.kind]
     if (loot.length) this.fx.drop(loot[Math.floor(Math.random() * loot.length)], b.x + p.facing * 8, b.y + 2)
   }
@@ -751,6 +773,7 @@ export class Game {
       const it = PICKUPS[d.kind]
       if (it.hp) p.hp = Math.min(p.maxHp, p.hp + it.hp)
       if (it.special) p.specialCd = 0
+      if (it.ticket) p.ticketT = 1500
       if (it.score) p.score += it.score
       this.fx.popup(p.x, p.y - 92, it.hp ? `+${it.hp} ${it.label}` : `+${it.label}`, it.score ? '#ffe14a' : '#7dff5a')
       audio.pickup()
@@ -760,10 +783,11 @@ export class Game {
   private updateCamera() {
     if (this.waveActive) return
     const target = this.player.x - 150
-    const next = WAVES[this.waveIdx]
-    const limit = next ? next.cam : LEVEL_LEN - VIEW_W
+    const next = this.waves[this.waveIdx]
+    const end = this.stage!.len - VIEW_W
+    const limit = next ? next.cam : end
     // never scrolls back, like the arcade classics
-    this.camX = Math.max(this.camX, Math.min(limit, LEVEL_LEN - VIEW_W, this.camX + Math.max(0, (target - this.camX) * 0.12)))
+    this.camX = Math.max(this.camX, Math.min(limit, end, this.camX + Math.max(0, (target - this.camX) * 0.12)))
   }
 
   // ------------------------------------------------------------ render
@@ -780,13 +804,14 @@ export class Game {
     const cam = Math.round(this.camX)
     this.stage.drawBack(ctx, cam, this.tick)
     this.fx.drawGround(ctx, cam, this.tick)
-    const all: Fighter[] = this.scene === 'title' || this.scene === 'select' ? [] : [this.player, ...this.enemies]
-    const behind = all.filter((f) => f.y < BARRIER_Y).sort((a, b) => a.y - b.y)
+    const playing = this.scene !== 'title' && this.scene !== 'select' && this.scene !== 'levels'
+    const all: Fighter[] = playing ? [this.player, ...this.enemies] : []
+    const split = this.stage.split
+    const behind = all.filter((f) => f.y < split).sort((a, b) => a.y - b.y)
     for (const f of behind) drawFighter(ctx, f, cam)
-    this.stage.drawBarriers(ctx, cam)
+    this.stage.drawFront(ctx, cam)
     // fighters and street props share one depth order
-    const playing = this.scene !== 'title' && this.scene !== 'select'
-    const front: { y: number; draw: () => void }[] = all.filter((f) => f.y >= BARRIER_Y).map((f) => ({ y: f.y, draw: () => this.drawOne(ctx, f, cam) }))
+    const front: { y: number; draw: () => void }[] = all.filter((f) => f.y >= split).map((f) => ({ y: f.y, draw: () => this.drawOne(ctx, f, cam) }))
     if (playing) for (const b of this.props) front.push({ y: b.y, draw: () => drawBreakable(ctx, b, cam) })
     if (playing)
       for (const pr of this.projectiles)
@@ -814,7 +839,7 @@ export class Game {
       case 'title':
         dim(ctx, 0.55)
         drawLogo(ctx, this.tick)
-        drawText(ctx, 'LEVEL 1: QUEUE TO BERG', VIEW_W >> 1, 112, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
+        drawText(ctx, 'A BERLIN BEAT-EM-UP', VIEW_W >> 1, 112, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
         if (this.showControls) {
           this.drawControls(ctx)
           return
@@ -822,6 +847,9 @@ export class Game {
         this.drawMenu(ctx, 136)
         if (t < 400 || Math.floor(t / 25) % 2 === 0)
           drawText(ctx, this.cb.touch ? 'STICK UP/DOWN CHOOSE   HIT OK' : 'UP/DOWN CHOOSE   ENTER OR X OK   (CLICK THE GAME FIRST)', VIEW_W >> 1, 196, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
+        return
+      case 'levels':
+        this.drawLevels(ctx, t)
         return
       case 'select':
         this.drawSelect(ctx, t)
@@ -833,34 +861,69 @@ export class Game {
         const boss = this.enemies.find((e) => e.isBoss) ?? null
         drawHud(ctx, this.player, this.lastFoeT > 0 ? this.lastFoe : null, boss, this.tick, this.ghostHp)
         if (this.scene === 'play') drawCombo(ctx, this.comboHits, this.comboT)
-        if (this.scene === 'play' && !this.waveActive && this.waveIdx > 0 && this.waveIdx < WAVES.length) drawGo(ctx, this.tick)
+        if (this.scene === 'play' && !this.waveActive && this.waveIdx > 0 && this.waveIdx < this.waves.length) drawGo(ctx, this.tick)
         if (this.scene === 'play' && t < 150 && this.waveIdx === 0)
-          drawBanner(ctx, [{ text: 'LEVEL 1', scale: 2, color: '#ffe14a' }, { text: 'QUEUE TO BERG', scale: 3, color: '#ffffff' }], 70)
+          drawBanner(ctx, [{ text: `LEVEL ${this.levelIdx + 1}`, scale: 2, color: '#ffe14a' }, { text: this.level.name, scale: 3, color: '#ffffff' }], 70)
         if (this.scene === 'paused') {
           dim(ctx, 0.6)
-          drawBanner(ctx, [{ text: 'PAUSE', scale: 3, color: '#ffffff' }], 56)
-          this.drawMenu(ctx, 100)
+          drawBanner(ctx, [{ text: 'PAUSE', scale: 3, color: '#ffffff' }], 46)
+          this.drawMenu(ctx, 90)
         }
         if (this.scene === 'gameover') {
           dim(ctx, Math.min(0.6, t / 60))
-          drawBanner(ctx, [{ text: 'HEUTE', scale: 3, color: '#ff3a5a' }, { text: 'LEIDER NICHT.', scale: 3, color: '#ff3a5a' }], 52)
-          if (t > 60) this.drawMenu(ctx, 128)
+          drawBanner(ctx, this.level.lose.map((text) => ({ text, scale: 3, color: '#ff3a5a' })), 52)
+          if (t > 60) this.drawMenu(ctx, 124)
         }
         if (this.scene === 'win') {
           dim(ctx, Math.min(0.55, t / 60))
           drawBanner(
             ctx,
             [
-              { text: 'KOMM REIN,', scale: 3, color: '#7dff5a' },
-              { text: 'VIEL SPASS!', scale: 3, color: '#7dff5a' },
+              ...this.level.win.map((text) => ({ text, scale: 3, color: '#7dff5a' })),
               { text: `SCORE ${this.player.score}`, scale: 2, color: '#ffe14a' },
             ],
             44,
           )
-          if (t > 60) this.drawMenu(ctx, 136)
+          if (t > 60) this.drawMenu(ctx, 140)
         }
       }
     }
+  }
+
+  /** LEVEL SELECT: one card per level, a picture, the name, and a lock on levels not reached yet */
+  private drawLevels(ctx: CanvasRenderingContext2D, t: number) {
+    dim(ctx, 0.6)
+    drawText(ctx, 'CHOOSE YOUR NIGHT', VIEW_W >> 1, 10, { scale: 2, align: 'center', color: '#ffe14a', outline: '#14101c', shadow: '#14101c' })
+    const open = unlockedCount()
+    const cw = 150
+    const ch = 84
+    const gap = 16
+    const x0 = Math.round((VIEW_W - LEVELS.length * cw - (LEVELS.length - 1) * gap) / 2)
+    LEVELS.forEach((lv, i) => {
+      const x = x0 + i * (cw + gap)
+      const y = 42
+      const on = i === this.levelIdx
+      const locked = i >= open
+      const bob = on ? Math.round(Math.sin(t / 10)) : 0
+      ctx.fillStyle = on ? '#ffe14a' : '#14101c'
+      ctx.fillRect(x - 2, y - 2 + bob, cw + 4, ch + 4)
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(x, y + bob, cw, ch)
+      ctx.clip()
+      this.stages[i]?.drawPreview(ctx, x, y + bob, cw, ch)
+      if (!on || locked) {
+        ctx.fillStyle = locked ? 'rgba(10,8,20,0.75)' : 'rgba(10,8,20,0.35)'
+        ctx.fillRect(x, y + bob, cw, ch)
+      }
+      ctx.restore()
+      if (locked) drawText(ctx, 'LOCKED', x + cw / 2, y + ch / 2 - 3 + bob, { align: 'center', color: '#9aa2c4', outline: '#14101c' })
+      drawText(ctx, `LEVEL ${i + 1}`, x + cw / 2, y + ch + 10, { align: 'center', color: on ? '#ffe14a' : '#9aa2c4', outline: '#14101c' })
+      drawText(ctx, lv.name, x + cw / 2, y + ch + 22, { align: 'center', color: on ? '#ffffff' : '#9aa2c4', outline: '#14101c' })
+      drawText(ctx, lv.when, x + cw / 2, y + ch + 34, { align: 'center', color: '#5af0ff', outline: '#14101c' })
+    })
+    if (Math.floor(t / 25) % 2 === 0)
+      drawText(ctx, this.cb.touch ? '< >  CHOOSE     HIT  GO' : '< >  CHOOSE     ENTER / X  GO     ESC  BACK', VIEW_W >> 1, 200, { align: 'center', color: '#c8ccdc', outline: '#14101c' })
   }
 
   /** CONTROLS page of the main menu */
@@ -984,5 +1047,7 @@ export class Game {
     drawFighter(ctx, f, cam)
     if (!f.isPlayer && f.state === 'down' && f.hp > 0) drawStars(ctx, f.x - cam - f.facing * 25, f.y - 16, this.tick)
     if (f.stunT > 0) drawStars(ctx, f.x - cam, f.y - 90, this.tick)
+    // frozen by a ticket inspector: a blinking "?!" and a hint to mash
+    if (p && p.frozenT > 0 && Math.floor(this.tick / 6) % 2 === 0) drawText(ctx, '?!', p.x - cam, p.y - 104, { align: 'center', color: '#ff7a7a', outline: '#14101c' })
   }
 }

@@ -1,9 +1,21 @@
 import type { PickupKind } from './effects'
-import { drawFrame, sheet } from './sprites'
-import { OPEN } from './stage'
+import { drawFrame, sheet, type SheetKey } from './sprites'
 
-/** Street objects in the walkable band that break when hit, and drop things. */
-export type BreakableKind = 'bin' | 'boxes' | 'crate' | 'cone'
+/** Objects in the walkable band that break when hit, and drop things. */
+export type BreakableKind = 'bin' | 'boxes' | 'crate' | 'cone' | 'suitcase' | 'bag' | 'speaker' | 'papers'
+
+/** each kind: its sprite sheet, how many hits it takes, what falls out */
+const DEFS: Record<BreakableKind, { sheet: SheetKey; hp: number; loot: PickupKind[] }> = {
+  bin: { sheet: 'props', hp: 2, loot: ['doner', 'currywurst', 'pretzel', 'doner'] },
+  boxes: { sheet: 'props', hp: 1, loot: ['cash', 'phone', 'wristband', 'glowstick'] },
+  crate: { sheet: 'props', hp: 1, loot: ['mate', 'mate', 'glowstick'] },
+  cone: { sheet: 'props', hp: 1, loot: [] },
+  // the night train: things people carry around at 4 a.m.
+  suitcase: { sheet: 'props_ubahn', hp: 2, loot: ['shoe', 'shades', 'wallet', 'skate'] },
+  bag: { sheet: 'props_ubahn', hp: 1, loot: ['gnome', 'umbrella', 'falafel', 'pizzabox'] },
+  speaker: { sheet: 'props_ubahn', hp: 2, loot: ['coffee', 'gummies', 'coffee'] },
+  papers: { sheet: 'props_ubahn', hp: 1, loot: ['ticket', 'keys', 'ticket'] },
+}
 
 export interface Breakable {
   id: number
@@ -18,31 +30,14 @@ export interface Breakable {
   vx: number
 }
 
-/** where they stand in level 1 (x, feet y) */
-const LAYOUT: [BreakableKind, number, number][] = [
-  ['cone', 200, 186],
-  ['bin', 300, 168],
-  ['bin', 250 + OPEN, 172],
-  ['boxes', 560 + OPEN, 192],
-  ['crate', 980 + OPEN, 166],
-  ['bin', 1180 + OPEN, 198],
-  ['cone', 1420 + OPEN, 176],
-  ['boxes', 1640 + OPEN, 200],
-  ['bin', 1990 + OPEN, 168],
-]
-
 /** what falls out when it breaks */
-export const LOOT: Record<BreakableKind, PickupKind[]> = {
-  bin: ['doner', 'currywurst', 'pretzel', 'doner'],
-  boxes: ['cash', 'phone', 'wristband', 'glowstick'],
-  crate: ['mate', 'mate', 'glowstick'],
-  cone: [],
-}
+export const LOOT = Object.fromEntries(Object.entries(DEFS).map(([k, d]) => [k, d.loot])) as Record<BreakableKind, PickupKind[]>
 
 let nextId = 1000
 
-export function makeBreakables(): Breakable[] {
-  return LAYOUT.map(([kind, x, y]) => ({ id: nextId++, kind, x, y, hp: kind === 'bin' ? 2 : 1, broken: false, t: 0, vx: 0 }))
+/** a level's props: [kind, x, feet y] */
+export function makeBreakables(layout: [BreakableKind, number, number][]): Breakable[] {
+  return layout.map(([kind, x, y]) => ({ id: nextId++, kind, x, y, hp: DEFS[kind].hp, broken: false, t: 0, vx: 0 }))
 }
 
 /** true while it can still be hit */
@@ -60,7 +55,7 @@ export function updateBreakable(b: Breakable) {
 
 export function drawBreakable(ctx: CanvasRenderingContext2D, b: Breakable, camX: number) {
   if (gone(b)) return
-  const s = sheet('props')
+  const s = sheet(DEFS[b.kind].sheet)
   const sx = b.x - camX
   if (b.broken && b.kind === 'crate') return // the bottle-smash effect replaces it
   if (b.broken && b.kind === 'cone') {

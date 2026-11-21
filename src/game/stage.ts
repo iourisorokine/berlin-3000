@@ -3,14 +3,48 @@ import glowUrl from '../assets/bg/glow.png'
 import level from '../assets/bg/level.json'
 import midUrl from '../assets/bg/mid.png'
 import { audio } from './audio'
-import { BARRIER_Y, LEVEL_LEN, VIEW_H, VIEW_W } from './constants'
+import { BARRIER_Y, VIEW_H, VIEW_W } from './constants'
 import { sheet, type Sheet } from './sprites'
 
+/** Where an enemy appears: a position, and whether it walks in (out of the queue, through a door). */
+export interface SpawnPoint {
+  x: number
+  y: number
+  enter: boolean
+}
+
+/** What every level's backdrop does for the game. */
+export interface Stage {
+  /** level length in art pixels */
+  len: number
+  /** fighters standing above this line are drawn behind drawFront (behind the barriers) */
+  split: number
+  load(): Promise<void>
+  /** one frame of stage life; returns a sideways jolt for everyone standing (braking trains) */
+  update(): number
+  drawBack(ctx: CanvasRenderingContext2D, camX: number, tick: number): void
+  drawFront(ctx: CanvasRenderingContext2D, camX: number): void
+  /** where an enemy from this source appears, or null if this stage has no such place */
+  spawnPoint(from: string, camX: number): SpawnPoint | null
+  /** false while spawns must wait (a train still braking into the station) */
+  ready(): boolean
+  /** a wave that needs a station starts / ends (the U-Bahn stops and leaves) */
+  arrive?(): void
+  depart?(): void
+  /** back to the start of the level (a new run) */
+  reset?(): void
+  /** 0..1, how close the player is to the source of the music (the club door) */
+  closeness(playerX: number): number
+  /** a small picture of the level for the level-select screen */
+  drawPreview(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void
+}
+
 /**
- * Level 1, QUEUE TO BERG. The background layers come from the ChatGPT images
+ * Level 1, QUEUE TO BERGHAIN. The background layers come from the ChatGPT images
  * (built by tools/import_backgrounds.py); the queue is made of the extras
  * sprites; barriers, lamp posts and kerb decorations come from the props sheets.
  */
+const LEVEL_LEN: number = level.levelLen
 
 export const DOOR_X = level.doorX
 /** x positions of the gaps in the barriers, where enemies step out of the queue */
@@ -142,7 +176,9 @@ function drawLight(): HTMLCanvasElement {
   return c
 }
 
-export class Stage {
+export class BerghainStage implements Stage {
+  len = LEVEL_LEN
+  split = BARRIER_Y
   far!: HTMLImageElement
   mid!: HTMLImageElement
   glow!: HTMLImageElement
@@ -195,7 +231,37 @@ export class Stage {
     }
   }
 
-  drawBarriers(ctx: CanvasRenderingContext2D, camX: number) {
+  drawFront(ctx: CanvasRenderingContext2D, camX: number) {
     ctx.drawImage(this.barriers, Math.round(camX), 0, VIEW_W, VIEW_H, 0, 0, VIEW_W, VIEW_H)
+  }
+
+  update() {
+    return 0
+  }
+
+  ready() {
+    return true
+  }
+
+  /** out of the queue through a gap in the barriers that is on screen, or out of the club door */
+  spawnPoint(from: string, camX: number): SpawnPoint | null {
+    if (from === 'door') return { x: DOOR_X, y: BARRIER_Y - 6, enter: true }
+    if (from === 'queue') {
+      const gaps = QUEUE_GAPS.filter((g) => g > camX + 24 && g < camX + VIEW_W - 24)
+      if (!gaps.length) return null
+      return { x: gaps[Math.floor(Math.random() * gaps.length)], y: BARRIER_Y - 8, enter: true }
+    }
+    return null
+  }
+
+  closeness(playerX: number) {
+    return Math.max(0, Math.min(1, (playerX - 300) / (DOOR_X - 300)))
+  }
+
+  drawPreview(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+    // the club facade with the skyline behind, squeezed into the card
+    const sx = 1700
+    ctx.drawImage(this.far, 120, 0, VIEW_W, VIEW_H, x, y, w, h)
+    ctx.drawImage(this.mid, sx, 0, VIEW_W, VIEW_H, x, y, w, h)
   }
 }

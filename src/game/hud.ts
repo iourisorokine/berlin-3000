@@ -42,6 +42,8 @@ export function drawHud(ctx: CanvasRenderingContext2D, p: Player, foe: Enemy | n
   const ready = p.specialCd <= 0
   bar(ctx, 42, 25, 60, 3, 1 - p.specialCd / p.hero.specialCooldown, ready ? '#5af0ff' : '#3a7aa0')
   if (ready && Math.floor(tick / 15) % 2 === 0) drawText(ctx, 'SPECIAL V', 106, 23, { color: '#5af0ff', outline: OUT })
+  // a day ticket (U-Bahn): blinks in its last 5 seconds
+  if (p.ticketT > 0 && (p.ticketT > 300 || Math.floor(tick / 8) % 2 === 0)) drawText(ctx, 'TICKET', 42, 31, { color: '#7dff5a', outline: OUT })
 
   // last enemy hit
   if (foe && !foe.isBoss) {

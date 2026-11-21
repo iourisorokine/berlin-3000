@@ -98,7 +98,14 @@ interface Popup {
   t: number
 }
 
-export type PickupKind = 'doner' | 'currywurst' | 'pretzel' | 'mate' | 'cash' | 'phone' | 'wristband' | 'glowstick'
+export type PickupKind =
+  | 'doner' | 'currywurst' | 'pretzel' | 'mate' | 'cash' | 'phone' | 'wristband' | 'glowstick'
+  // the U-Bahn's lost and found
+  | 'ticket' | 'falafel' | 'gummies' | 'coffee' | 'umbrella' | 'pizzabox' | 'skate' | 'gnome' | 'shoe' | 'keys' | 'wallet' | 'shades'
+
+/** U-Bahn pickups live on their own sheet */
+const UBAHN_ITEMS = new Set<PickupKind>(['ticket', 'falafel', 'gummies', 'coffee', 'umbrella', 'pizzabox', 'skate', 'gnome', 'shoe', 'keys', 'wallet', 'shades'])
+export const itemSheet = (k: PickupKind) => (UBAHN_ITEMS.has(k) ? 'items_ubahn' : 'items')
 
 export interface Pickup {
   kind: PickupKind
@@ -302,7 +309,6 @@ export class Effects {
 
   /** pickups and things lying on the ground: drawn before the fighters */
   drawGround(ctx: CanvasRenderingContext2D, camX: number, tick: number) {
-    const items = sheet('items')
     for (const d of this.debris) {
       if (d.z > 0 || (d.t > 50 && Math.floor(d.t / 3) % 2)) continue
       drawFrame(ctx, sheet(d.sheet), d.name, d.x - camX, d.y, 1, { tilt: d.rot })
@@ -312,7 +318,7 @@ export class Effects {
       const bob = d.z === 0 ? Math.round(Math.sin(tick / 12) * 1) : 0
       ctx.fillStyle = 'rgba(8,6,16,0.45)'
       ctx.fillRect(Math.round(d.x - camX) - 5, Math.round(d.y), 11, 1)
-      drawFrame(ctx, items, d.kind, d.x - camX, d.y - d.z - 1 + bob, 1)
+      drawFrame(ctx, sheet(itemSheet(d.kind)), d.kind, d.x - camX, d.y - d.z - 1 + bob, 1)
     }
   }
 

@@ -1412,5 +1412,316 @@
       "walk4"
     ],
     "res": 2
+  },
+  "inspector": {
+    "targetHeight": 84,
+    "colors": 32,
+    "scaleFrom": "enemy_ubahn_inspector_A.png",
+    "sheets": [
+      {
+        "file": "enemy_ubahn_inspector_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_ubahn_inspector_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ],
+    "res": 2
+  },
+  "drunk": {
+    "targetHeight": 80,
+    "colors": 32,
+    "scaleFrom": "enemy_ubahn_drunk_A.png",
+    "sheets": [
+      {
+        "file": "enemy_ubahn_drunk_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ]
+      },
+      {
+        "file": "enemy_ubahn_drunk_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ]
+      }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ],
+    "res": 2
+  },
+  "couch": {
+    "targetHeight": 86,
+    "colors": 32,
+    "scaleFrom": "enemy_ubahn_couch_A.png",
+    "sheets": [
+      {
+        "file": "enemy_ubahn_couch_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          "walk1",
+          "walk2",
+          "walk3",
+          "walk4"
+        ],
+        "keepAll": true
+      },
+      {
+        "file": "enemy_ubahn_couch_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "keepAll": true
+      }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4",
+      "walk1",
+      "walk2",
+      "walk3",
+      "walk4"
+    ],
+    "res": 2
+  },
+  "busker": {
+    "targetHeight": 88,
+    "colors": 32,
+    "scaleFrom": "enemy_ubahn_busker_A.png",
+    "sheets": [
+      {
+        "file": "enemy_ubahn_busker_A.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "idle1",
+          "idle4"
+        ],
+        "frames": [
+          "idle1",
+          "idle2",
+          "idle3",
+          "idle4",
+          null,
+          null,
+          null,
+          null
+        ],
+        "keepAll": true
+      },
+      {
+        "file": "enemy_ubahn_busker_B.png",
+        "cols": 4,
+        "rows": 2,
+        "stand": [
+          "atk4"
+        ],
+        "frames": [
+          "atk1",
+          "atk2",
+          "atk3",
+          "atk4",
+          "hurt",
+          "fall",
+          "ko",
+          "getup"
+        ],
+        "keepAll": true
+      }
+    ],
+    "bodyAnchor": [
+      "idle1",
+      "idle2",
+      "idle3",
+      "idle4"
+    ],
+    "res": 2
+  },
+  "extras_ubahn": {
+    "targetHeight": 66,
+    "colors": 64,
+    "scaleFrom": "extras_ubahn.png",
+    "sheets": [
+      {
+        "file": "extras_ubahn.png",
+        "cols": 8,
+        "rows": 2,
+        "stand": [
+          "p6",
+          "p7"
+        ],
+        "frames": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6",
+          "p7",
+          "p8",
+          "q1",
+          "q2",
+          "q3",
+          "q4",
+          "q5",
+          "q6",
+          "q7",
+          "q8"
+        ],
+        "keepAll": true
+      }
+    ]
+  },
+  "props_ubahn": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "props_ubahn.png",
+    "sheets": [
+      {
+        "file": "props_ubahn.png",
+        "cols": 4,
+        "rows": 2,
+        "scale": 0.17,
+        "frames": [
+          "suitcase",
+          "suitcase_broken",
+          "bag",
+          "bag_broken",
+          "speaker",
+          "speaker_broken",
+          "papers",
+          "papers_broken"
+        ],
+        "keepAll": true
+      }
+    ]
+  },
+  "items_ubahn": {
+    "targetHeight": 72,
+    "colors": 64,
+    "scaleFrom": "items_ubahn.png",
+    "sheets": [
+      {
+        "file": "items_ubahn.png",
+        "cols": 4,
+        "rows": 4,
+        "scale": 0.0694,
+        "frames": [
+          "ticket",
+          "falafel",
+          "gummies",
+          "coffee",
+          "umbrella",
+          "pizzabox",
+          "skate",
+          "gnome",
+          "shoe",
+          "keys",
+          "wallet",
+          "shades",
+          null,
+          null,
+          null,
+          null
+        ],
+        "keepAll": true
+      }
+    ]
   }
 }
