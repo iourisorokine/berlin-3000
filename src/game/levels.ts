@@ -54,8 +54,8 @@ export interface LevelDef {
   win: [string, string]
   lose: [string, string]
   music: 'club' | 'train' | 'street'
-  /** the fight inside the side room (the cafe), and the furniture there: [kind, screen x, feet y] */
-  sideWave?: WaveDef
+  /** the fight inside the side room (the cafe), round after round, and the furniture there: [kind, screen x, feet y] */
+  sideWaves?: WaveDef[]
   sideProps?: [BreakableKind, number, number][]
   /** chance that a knocked-out enemy drops something */
   dropChance: number
@@ -179,17 +179,23 @@ LEVELS.push({
     ['cone', 2150, 190],
     ['bin', 2420, 176],
   ],
-  // for now the street is fought by level 1's crowd: the Prenzlauer Berg enemies come later
+  // the street: cargo bikes, dog walkers, estate agents and selfie tourists (the barista stays in his cafe)
   waves: [
-    { cam: 0, count: [2, 3], pool: ['mullet', 'tourist', 'monk'], from: ['right', 'right', 'left'] },
-    { cam: 420, jitter: 40, count: [3, 4], pool: ['mullet', 'tourist', 'queen', 'punkgirl'], from: ['right', 'left'] },
-    { cam: 820, count: [1, 2], pool: ['tourist', 'mullet'], from: ['left', 'right'], chance: 0.4 },
-    { cam: 1100, jitter: 40, count: [3, 5], pool: ['harness', 'mullet', 'queen', 'monk', 'tourist'], from: ['right', 'left'] },
-    { cam: 1980, jitter: 30, count: [4, 5], pool: ['harness', 'queen', 'punkgirl', 'mullet', 'tourist', 'monk'], from: ['right', 'left'] },
-    { cam: L3 - VIEW_W, count: [4, 6], pool: ['harness', 'harness', 'queen', 'mullet', 'punkgirl', 'monk'], from: ['right', 'left'] },
+    { cam: 0, count: [2, 3], pool: ['doglady', 'tourist', 'cargobike'], from: ['right', 'right', 'left'] },
+    { cam: 420, jitter: 40, count: [3, 4], pool: ['cargobike', 'doglady', 'tourist', 'agent'], from: ['right', 'left'] },
+    { cam: 820, count: [1, 2], pool: ['cargobike', 'tourist'], from: ['left', 'right'], chance: 0.4 },
+    { cam: 1100, jitter: 40, count: [3, 5], pool: ['agent', 'doglady', 'cargobike', 'tourist'], from: ['right', 'left'] },
+    { cam: 1980, jitter: 30, count: [4, 5], pool: ['agent', 'agent', 'cargobike', 'doglady', 'tourist'], from: ['right', 'left'] },
+    // the construction site: the estate agents defend their showroom
+    { cam: L3 - VIEW_W, count: [4, 6], pool: ['agent', 'agent', 'agent', 'doglady', 'cargobike', 'tourist'], from: ['right', 'left'] },
   ],
-  // the cafe: optional, guests storm in through the door and from the kitchen; the furniture hides the treats
-  sideWave: { cam: CAFE, count: [3, 4], pool: ['mullet', 'tourist', 'queen', 'monk'], from: ['door', 'door', 'right'] },
+  // the cafe: optional, three rounds of guests through the door and baristas from behind the counter;
+  // the furniture hides the treats (no cargo bikes indoors)
+  sideWaves: [
+    { cam: CAFE, count: [2, 3], pool: ['barista', 'barista', 'tourist'], from: ['door', 'right'] },
+    { cam: CAFE, count: [3, 4], pool: ['barista', 'doglady', 'agent', 'tourist'], from: ['door', 'door', 'right'] },
+    { cam: CAFE, count: [3, 4], pool: ['barista', 'barista', 'agent', 'doglady'], from: ['door', 'right', 'right'] },
+  ],
   sideProps: [
     ['chair', 90, 178],
     ['table', 150, 196],

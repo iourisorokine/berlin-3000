@@ -59,7 +59,7 @@ club-light pixels into `glow.png` (pulsed on the kick drum). Output: `src/assets
 | --- | --- |
 | `src/game/constants.ts` | screen size, physics, combat feel (hit-stop, reach), enemy limits |
 | `src/game/heroes.ts` | CRAZY NESS (id jule), SHOVELIST, GOTHILDE (ids `ravequeen`, and `queen` for the old enemy-sheet version), LOLLI, BAD BAD SCHWEIN, YO HIGHNESS (and the retired KALLE): health, speed, frames, combo, air attack, special, trait |
-| `src/game/enemy.ts` | enemy types and AI (level 1 crowd, plus KONTROLLETTI, PROST PAULE, COUCH CREW, BUSKER DUO) |
+| `src/game/enemy.ts` | enemy types and AI (level 1 crowd; U-Bahn: KONTROLLETTI, PROST PAULE, COUCH CREW, BUSKER DUO; Prenzlauer Berg: LASTENRAD-PAPA, FRAU VON WAU, BARISTA BJOERN, MAKLER MAX) |
 | `src/game/levels.ts` | the levels: name, stage, randomised waves, props, loot, win/lose lines; unlock progress |
 | `src/game/Game.ts` | wave flow, camera, hit resolution, enemy tricks, scenes (title, level select, fighter select, play) |
 | `src/game/stage.ts` | the `Stage` interface and level 1, QUEUE TO BERGHAIN (skyline, club, queue, barriers) |

@@ -174,6 +174,51 @@ export const ENEMY_TYPES = {
     moves: [raverAttack('chord', 18, 62, 5, { knockback: 5.5, fx: 'chord', say: 'HIT THE ROAD!' })],
     score: 200,
   },
+  // ---------- LATTE ART ATTACK (Prenzlauer Berg) ----------
+  cargobike: {
+    name: 'LASTENRAD-PAPA',
+    sheet: 'cargobike',
+    anim: RAVER_ANIM,
+    hp: 70,
+    speed: 1.5,
+    power: 1,
+    // rings the bell and rams you with the cargo box
+    moves: [raverAttack('ram', 14, 48, 11, { knockback: 3.6, knockdown: true, lunge: 3.2, say: 'KLINGELING!', fx: 'bell' })],
+    score: 220,
+  },
+  doglady: {
+    name: 'FRAU VON WAU',
+    sheet: 'doglady',
+    anim: RAVER_ANIM,
+    hp: 60,
+    speed: 0.9,
+    power: 1,
+    // the dogs lunge on their leashes (and she insists they never do anything)
+    moves: [raverAttack('dogs', 16, 56, 9, { knockback: 2.6, fx: 'bark', say: 'DIE TUN NIX!' })],
+    score: 200,
+  },
+  barista: {
+    name: 'BARISTA BJOERN',
+    sheet: 'barista',
+    anim: RAVER_ANIM,
+    hp: 55,
+    speed: 1.0,
+    power: 1,
+    // flings hot milk foam: you slip and slow down
+    moves: [raverAttack('foam', 14, 54, 7, { knockback: 1.4, fx: 'foam', say: 'HAFERMILCH?!' })],
+    score: 180,
+  },
+  agent: {
+    name: 'MAKLER MAX',
+    sheet: 'agent',
+    anim: RAVER_ANIM,
+    hp: 60,
+    speed: 1.1,
+    power: 1,
+    // shoves a contract in your face: the rent goes up, your score goes down
+    moves: [raverAttack('contract', 14, 46, 5, { knockback: 1, fx: 'rent', say: 'UNTERSCHREIB HIER!' })],
+    score: 240,
+  },
   bouncer: {
     name: 'DER TUERSTEHER',
     sheet: 'bouncer',

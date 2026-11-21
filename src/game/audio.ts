@@ -216,6 +216,45 @@ class Audio {
     }
   }
 
+  /** a bicycle bell: two bright pings */
+  bell() {
+    this.tone(2350, 0, 0.35, 0.12)
+    this.tone(3100, 0, 0.3, 0.06)
+    this.tone(2350, 0.16, 0.35, 0.12)
+    this.tone(3100, 0.16, 0.3, 0.06)
+  }
+
+  /** two big dogs: a low 'wuff wuff' */
+  bark() {
+    const ctx = this.ctx
+    if (!ctx || !this.master) return
+    for (const at of [0, 0.2]) {
+      const t = ctx.currentTime + at
+      const o = ctx.createOscillator()
+      const g = ctx.createGain()
+      o.type = 'sawtooth'
+      o.frequency.setValueAtTime(260, t)
+      o.frequency.exponentialRampToValueAtTime(140, t + 0.12)
+      const f = ctx.createBiquadFilter()
+      f.type = 'lowpass'
+      f.frequency.value = 900
+      g.gain.setValueAtTime(0.0001, t)
+      g.gain.exponentialRampToValueAtTime(0.3, t + 0.015)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14)
+      o.connect(f).connect(g).connect(this.master)
+      o.start(t)
+      o.stop(t + 0.15)
+    }
+    this.burst(700, 1, 0.12, 0.1)
+  }
+
+  /** the cash register of a rent increase: ka-ching */
+  kaching() {
+    this.burst(4000, 2, 0.15, 0.05, 'highpass')
+    this.tone(1568, 0.06, 0.5, 0.14)
+    this.tone(2093, 0.06, 0.6, 0.1)
+  }
+
   /** an old sofa's springs: a wobbly boing */
   boing() {
     const ctx = this.ctx

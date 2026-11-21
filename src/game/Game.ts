@@ -147,6 +147,8 @@ export class Game {
   private exitT = 0
   /** the side room (cafe): not visited yet, fighting inside, won (can leave), left */
   private sideState: 'none' | 'fight' | 'clear' | 'done' = 'none'
+  /** which round of the side room's fight */
+  private sideRound = 0
   /** the circle wipe between the street and the side room */
   private trans: { t: number; to: 'side' | 'street' } | null = null
   /** what stays outside while the hero is in the side room */
@@ -626,9 +628,11 @@ export class Game {
         p.y = band.top + 8
         p.facing = 1
         this.sideState = 'fight'
+        this.sideRound = 0
         this.waveActive = true
         this.waveT = 0
-        this.pending = this.level.sideWave ? rollSpawns(this.level.sideWave) : []
+        const first = this.level.sideWaves?.[0]
+        this.pending = first ? rollSpawns(first) : []
         audio.mode = 'cafe'
       } else {
         st.inSide = false
@@ -668,6 +672,15 @@ export class Game {
     for (const s of this.pending.filter((s) => s.delay <= this.waveT)) this.spawn(s)
     this.pending = this.pending.filter((s) => s.delay > this.waveT)
     if (!this.pending.length && this.enemies.every((e) => e.state === 'dead') && this.sideState === 'fight') {
+      // next round: more guests come in after a short breather
+      const next = this.level.sideWaves?.[this.sideRound + 1]
+      if (next) {
+        this.sideRound++
+        this.waveT = -70
+        this.pending = rollSpawns(next)
+        this.fx.popup(this.camX + VIEW_W / 2, band.top - 30, this.sideRound === 1 ? 'MEHR GAESTE!' : 'RUSH HOUR!', '#ffe14a')
+        return
+      }
       // the side room is won: a treat and a bonus, and the door out opens
       this.waveActive = false
       this.sideState = 'clear'
@@ -872,7 +885,7 @@ export class Game {
     if (e.t === 1 && m.say) {
       this.fx.popup(e.x, e.y - 106, m.say, '#ffffff')
       // a voice for the shout: deep for the movers and the inspector, high for the singer's duo
-      const pitch = { couch: 115, inspector: 105, busker: 190, bouncer: 85 }[e.kind as string] ?? 150
+      const pitch = { couch: 115, inspector: 105, busker: 190, bouncer: 85, doglady: 230, barista: 100, cargobike: 120, agent: 140 }[e.kind as string] ?? 150
       audio.shout(m.say.split(/[ ,]+/).filter(Boolean).length, pitch)
     }
     // PROST PAULE: one swing in three goes nowhere
@@ -936,6 +949,30 @@ export class Game {
           e.vx += e.facing * 2 // swings into thin air and stumbles past
           audio.whoosh()
         } else audio.swing()
+        break
+      case 'bell':
+        audio.bell()
+        this.fx.dust(e.x - e.facing * 20, e.y, true)
+        break
+      case 'bark':
+        audio.bark()
+        this.fx.popup(front + e.facing * 6, e.y - 50, 'WUFF!', '#ffffff')
+        break
+      case 'foam':
+        audio.hiss()
+        this.fx.vape(front, e.y, 50, e.facing)
+        if (Math.abs(p.x - front) < 40 && Math.abs(p.y - e.y) < 14 && p.state !== 'down' && p.z === 0) {
+          p.slowT = 90
+          this.fx.popup(p.x, p.y - 97, 'RUTSCH!', '#fff6e0')
+        }
+        break
+      case 'rent':
+        if (Math.abs(p.x - front) < 44 && Math.abs(p.y - e.y) < 14 && p.state !== 'down' && p.state !== 'dead') {
+          audio.kaching()
+          p.score = Math.max(0, p.score - 150)
+          this.fx.popup(p.x, p.y - 100, 'MIETE +30%', '#ff7a7a')
+          this.fx.popup(p.x, p.y - 30, '-150', '#ff7a7a')
+        }
         break
       case 'sofa':
         this.shake = Math.max(this.shake, 6)

@@ -18,11 +18,19 @@ if (MAP_URL) {
  */
 
 /** where each level happens on the map, and its pin colour */
-export const SPOTS: Record<string, { x: number; y: number; color: string; area: string }> = {
-  berghain: { x: 176, y: 128, color: '#ff3a5a', area: 'FRIEDRICHSHAIN' },
-  ubahn: { x: 158, y: 97, color: '#ffd23a', area: 'UNDER MITTE' },
-  prenzl: { x: 168, y: 72, color: '#7dff5a', area: 'PRENZLAUER BERG' },
-}
+// on the illustrated map: the power plant by the river, the U-Bahn entrance at Alexanderplatz,
+// the water tower in Prenzlauer Berg (screen px = source x / 4, (source y - 80) / 4)
+export const SPOTS: Record<string, { x: number; y: number; color: string; area: string }> = MAP_URL
+  ? {
+      berghain: { x: 222, y: 104, color: '#ff3a5a', area: 'FRIEDRICHSHAIN' },
+      ubahn: { x: 183, y: 100, color: '#ffd23a', area: 'UNDER MITTE' },
+      prenzl: { x: 228, y: 56, color: '#7dff5a', area: 'PRENZLAUER BERG' },
+    }
+  : {
+      berghain: { x: 176, y: 128, color: '#ff3a5a', area: 'FRIEDRICHSHAIN' },
+      ubahn: { x: 158, y: 97, color: '#ffd23a', area: 'UNDER MITTE' },
+      prenzl: { x: 168, y: 72, color: '#7dff5a', area: 'PRENZLAUER BERG' },
+    }
 
 const OUTLINE: [number, number][] = [
   [22, 92], [34, 70], [60, 58], [80, 40], [112, 30], [140, 24], [168, 30], [196, 26], [222, 40], [240, 62], [256, 84],

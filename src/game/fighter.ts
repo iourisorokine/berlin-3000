@@ -58,7 +58,7 @@ export interface Move {
   /** forward speed during the active frames */
   lunge?: number
   /** the attacker's trick at the first active frame (effect + sound) */
-  fx?: 'flash' | 'stomp' | 'vape' | 'gust' | 'gum' | 'selfie' | 'click' | 'thump' | 'ticket' | 'stagger' | 'chord' | 'sofa'
+  fx?: 'flash' | 'stomp' | 'vape' | 'gust' | 'gum' | 'selfie' | 'click' | 'thump' | 'ticket' | 'stagger' | 'chord' | 'sofa' | 'bell' | 'bark' | 'foam' | 'rent'
   /** shouted when the wind-up starts */
   say?: string
   /** does not flinch when hit during the wind-up */
